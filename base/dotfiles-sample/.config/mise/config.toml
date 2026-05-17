@@ -5,14 +5,13 @@
 # container these tools are system-installed in /usr/local/bin by the image build.
 # Run `mise install` on your Mac to get the same versions locally.
 #
-# Tools without a pinned version in the Dockerfile (starship, lazydocker, hadolint)
+# Tools without a pinned version in the Dockerfile (lazydocker, hadolint)
 # are set to "latest" here to match that behaviour.
 [tools]
 node = "lts"
 go = "latest"
 
 # --- CLI tools (mirrors base/Dockerfile cli-tools stage) ---
-"ubi:starship-rs/starship"       = "latest"   # no version pin in Dockerfile
 "ubi:ajeetdsouza/zoxide"         = "0.9.6"
 "ubi:atuinsh/atuin"              = "18.4.0"
 "ubi:jesseduffield/lazydocker"   = "latest"   # no version pin in Dockerfile

@@ -45,6 +45,29 @@ Copy `overlays/example-project/.devcontainer/` into a project repo, customize th
 
 The `.devcontainer/devcontainer.json` declares VS Code extensions that install inside the container, mounts the project as the workspace, and runs `postCreateCommand` to install language-specific deps.
 
+### Mode 3a: deepclaude overlay (free OpenRouter backend)
+
+Run Claude Code routed through free OpenRouter models via [claude-code-router](https://github.com/musistudio/claude-code-router) (`ccr`).
+
+```bash
+cp -r overlays/deepclaude/.devcontainer /path/to/project/.devcontainer
+# Cursor → Dev Containers: Reopen in Container
+# Inside the container:
+op run --env-file=~/.config/op/openrouter.env -- ccr code
+```
+
+Default model: `deepseek/deepseek-v4-flash:free`. Swap mid-session with `/model openrouter,<id>` (configured options listed in `overlays/deepclaude/README.md`). The 1Password env template lives at `dotfiles/.config/op/openrouter.env.example` — copy to `~/.config/op/openrouter.env` and the reference resolves to `op://Personal/OpenRouter API Key/credential`.
+
+### Using your own host dotfiles instead of the sample
+
+`dotfiles/` contains personal configs (zsh, tmux, git, nvim, bogan-term, gh settings) mirrored from `~/.`. To use it inside the devbox, set in `base/.env`:
+
+```bash
+DOTFILES_LOCAL=/path/to/dockerize/dotfiles
+```
+
+The container's `entrypoint.sh` rsyncs it into `/home/dev/` on start. Credentials are intentionally omitted (no `gh/hosts.yml`, no `op/` state) — review `dotfiles/README.md` before committing.
+
 ## AI agent secrets
 
 Avoid baking API keys into the image. Two good options:
@@ -72,7 +95,15 @@ Compose injects them into the container. Downside: keys live in plaintext on dis
    ANTHROPIC_API_KEY=op://Personal/Anthropic/api_key
    ```
 
-The aliases in the sample `.zshrc` are commented out — uncomment after configuring `op`.
+Inside the container, `.zshrc` wraps `claude`, `codex`, and `gemini` with `op run` when `~/.config/op/<agent>.env` exists. Templates ship in `base/dotfiles-sample/.config/op/*.env.example` and are seeded on first `install.sh` / host `scripts/seed-op-env.sh`.
+
+On the Mac host, run once:
+
+```bash
+scripts/seed-op-env.sh    # copies *.env.example → ~/.config/op/
+# edit op:// references, then:
+op signin
+```
 
 ## Cursor integration — both flavors
 
@@ -85,6 +116,21 @@ In a project with `.devcontainer/devcontainer.json`: `Cmd+Shift+P → Dev Contai
 `scripts/install-host.sh` already wrote a `~/.ssh/config` entry for you. In Cursor: `Cmd+Shift+P → Remote-SSH: Connect to Host → devbox`. The whole window now runs against the container; extensions installed inside it.
 
 Both can coexist — use Dev Containers for project work where reproducibility matters, SSH for general "my Linux box" exploration.
+
+### Sharing this workflow with AI agents (Cursor, Claude, Gemini)
+
+| Agent | How it gets ground truth |
+|---|---|
+| **Cursor** (this Mac) | Open `dockerize.code-workspace` or `~/vault/mcp/dockerize`; vault rule at `~/vault/.cursor/rules/devbox-pointer.mdc` when working elsewhere under vault/code |
+| **Cursor MCP** | `scripts/sync-cursor-mcp.sh` writes `~/.cursor/mcp.json` from repo `mcp.json` |
+| **Claude Code** | `CLAUDE.md` auto-loads when cwd is this repo; elsewhere: `claude --add-dir ~/vault/mcp/dockerize` |
+| **Gemini CLI** | Read `GEMINI.md`; @-mention `CLAUDE.md` / `docs/usage.md` in prompts |
+
+Paste packet for any chat: *"Dev environment is devbox in `~/vault/mcp/dockerize`. Follow CLAUDE.md Hard rules. `devbox ssh` for long-lived; `devbox sandbox` for ephemeral."*
+
+## Shell prompt
+
+oh-my-zsh with the `robbyrussell` theme (`ZSH_THEME` in `base/dotfiles-sample/.zshrc` or your dotfiles repo). Starship is not installed in the image.
 
 ## Auditing the image
 

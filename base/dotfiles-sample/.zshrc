@@ -1,7 +1,7 @@
 # devbox starter .zshrc — fork this into your own dotfiles repo and iterate.
 
 export ZSH="$HOME/.oh-my-zsh"
-ZSH_THEME=""    # starship takes over below — keep OMZ for plugin loading only
+ZSH_THEME="robbyrussell"
 plugins=(
   zsh-autosuggestions
   zsh-syntax-highlighting
@@ -23,9 +23,6 @@ command -v direnv >/dev/null && eval "$(direnv hook zsh)"
   source /usr/share/doc/fzf/examples/key-bindings.zsh
 [ -f /usr/share/doc/fzf/examples/completion.zsh ] && \
   source /usr/share/doc/fzf/examples/completion.zsh
-
-# starship — fast, lazy, cross-shell prompt (replaces ZSH_THEME)
-command -v starship >/dev/null && eval "$(starship init zsh)"
 
 # zoxide — rebind `cd` to frecency engine; falls through to builtin `cd` on miss
 command -v zoxide >/dev/null && eval "$(zoxide init zsh --cmd cd)"
@@ -98,11 +95,28 @@ atuin-sync-setup() {
 export EDITOR=vim
 export VISUAL=vim
 
-# AI agent helpers — wrap with `op run` so secrets stay in 1Password.
-# Uncomment after you've configured op:
-# alias claude='op run --env-file="$HOME/.config/op/claude.env" -- claude'
-# alias codex='op run --env-file="$HOME/.config/op/codex.env" -- codex'
-# alias gemini='op run --env-file="$HOME/.config/op/gemini.env" -- gemini'
+# AI agent helpers — wrap with `op run` when ~/.config/op/<agent>.env exists.
+# Templates: ~/.dotfiles-sample/.config/op/*.env.example (copy and fill op:// refs).
+_op_agent() {
+    local agent="$1"
+    shift
+    local envfile="$HOME/.config/op/${agent}.env"
+    if command -v op >/dev/null && [ -f "$envfile" ]; then
+        op run --env-file="$envfile" -- "$@"
+    else
+        command "$@"
+    fi
+}
+claude()  { _op_agent claude  claude  "$@"; }
+codex()   { _op_agent codex   codex   "$@"; }
+gemini()  { _op_agent gemini  gemini  "$@"; }
+deepseek() {
+    if command -v op >/dev/null && [ -f "$HOME/.config/op/deepseek.env" ]; then
+        op run --env-file="$HOME/.config/op/deepseek.env" -- npx -y run-deepseek-cli "$@"
+    else
+        npx -y run-deepseek-cli "$@"
+    fi
+}
 
 # Greeting — confirms which container you're in
 [ -t 1 ] && echo "devbox: $(hostname) | $(uname -sm) | $(date +%H:%M)"

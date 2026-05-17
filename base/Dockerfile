@@ -76,10 +76,6 @@ RUN curl -fsSL -o /usr/local/bin/yq \
         "https://github.com/mikefarah/yq/releases/latest/download/yq_linux_${TARGETARCH:-amd64}" && \
     chmod +x /usr/local/bin/yq
 
-# starship — fast, lazy, cross-shell prompt (replaces oh-my-zsh themes)
-RUN curl -sS https://starship.rs/install.sh \
-        | sh -s -- -y -b /usr/local/bin
-
 # zoxide — frecency-ranked `cd` replacement (ajeetdsouza/zoxide)
 RUN ZOXIDE_VERSION="0.9.6" && \
     ARCH_ZOXIDE=$(case "${TARGETARCH:-amd64}" in amd64) echo "x86_64-unknown-linux-musl";; arm64) echo "aarch64-unknown-linux-musl";; esac) && \
