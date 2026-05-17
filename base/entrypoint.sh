@@ -31,9 +31,14 @@ if [ -S /var/run/docker.sock ]; then
     sock_gid=$(stat -c '%g' /var/run/docker.sock)
     current_gid=$(getent group docker | cut -d: -f3 || echo "")
     if [ -n "$sock_gid" ] && [ "$sock_gid" != "$current_gid" ]; then
-        groupmod -g "$sock_gid" docker 2>/dev/null || \
-            groupadd -g "$sock_gid" docker-host && \
-            usermod -aG docker-host "$USERNAME"
+        if [ "$sock_gid" = "0" ]; then
+            usermod -aG root "$USERNAME"
+        else
+            groupmod -g "$sock_gid" docker 2>/dev/null || {
+                groupadd -g "$sock_gid" docker-host 2>/dev/null || true
+                usermod -aG docker-host "$USERNAME"
+            }
+        fi
     fi
 fi
 
