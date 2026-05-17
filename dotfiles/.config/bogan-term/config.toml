@@ -1,0 +1,39 @@
+[features]
+motd = true
+ps1 = true
+ticker = true
+preexec_bogan = true
+chpwd_bogan = true
+command_not_found_bogan = true
+transient_prompt = false
+rprompt = true
+title_bar = true
+daily_motd = false
+figlet_lolcat_time = false
+photo_via_chafa = false
+
+[themes]
+art_rotation = [
+    "vb_stubbie",
+    "kangaroo",
+    "hills_hoist",
+    "mullet_bloke",
+    "boxing_kangaroo",
+    "steve_irwin",
+    "drop_bear",
+    "esky",
+    "akubra",
+]
+ps1_style = "vb_can_oi"
+ps1_static_word = "oi"
+ps1_failure_word = "wadiyatalkinabeet"
+color_palette = "xterm256"
+
+[duration]
+mode = "forever"
+time_unit = "hours"
+time_value = 2
+expires_at = 1778837898
+
+[ticker]
+source_file = "~/.config/bogan-term/tickers.txt"

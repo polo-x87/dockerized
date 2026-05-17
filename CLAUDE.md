@@ -16,6 +16,17 @@ base/                 the devbox-base image (and optional Swift sidecar)
 overlays/example-project/
 └── .devcontainer/    reference .devcontainer/ users copy into their own repos
 
+overlays/deepclaude/
+├── README.md          per-project overlay docs
+└── .devcontainer/     extends devbox-base with claude-code-router (ccr) +
+                       baked ccr config; OPENROUTER_API_KEY supplied at runtime
+                       via op run (no keys in image)
+
+dotfiles/              personal host dotfiles (zsh/tmux/git/nvim/...) mirrored
+                       from ~/. Drop-in replacement for base/dotfiles-sample
+                       when DOTFILES_LOCAL is set in base/.env. See its README.
+                       Excludes anything with credentials (gh/hosts.yml, op/state).
+
 scripts/
 ├── devbox            daily-driver CLI (ssh, exec, build, start, status, sandbox, update)
 ├── devbox-sandbox    ephemeral run for AI agents (no host mounts, --rm)
@@ -31,6 +42,8 @@ docs/
 ├── guide.html        SELF-CONTAINED interactive guide. No build step.
 └── usage.md          daily workflows + troubleshooting
 
+GEMINI.md             Gemini CLI summary (points here for hard rules)
+dockerize.code-workspace   multi-root Cursor workspace (dockerize + vault + code)
 mcp_workflow.md       separate Python research-system Dockerfile pattern (consumed by guide.html)
 ```
 

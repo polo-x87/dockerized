@@ -96,16 +96,24 @@ if [ -d "$REPO_ROOT/.git" ]; then
     "$SCRIPTS_DIR/install-git-hooks.sh"
 fi
 
+# 8. Cursor MCP + 1Password agent env templates (host)
+say "syncing Cursor MCP config"
+"$SCRIPTS_DIR/sync-cursor-mcp.sh" 2>/dev/null || warn "sync-cursor-mcp skipped (run manually after fixing permissions)"
+say "seeding ~/.config/op agent env templates"
+"$SCRIPTS_DIR/seed-op-env.sh"
+
 say "done"
 cat <<EOF
 
 next steps:
   1. open $BASE_DIR/.env and set DOTFILES_REPO (or leave blank to use the sample)
-  2. source your shell: exec zsh   (or open a new terminal)
-  3. build the image:   devbox build
-  4. start it:          devbox start
-  5. log in:            devbox ssh    (first time: accept the host key)
-  6. configure Cursor:  Cmd+Shift+P → Remote-SSH: Connect to Host → devbox
+  2. edit ~/.config/op/*.env with your op:// references; run: op signin
+  3. source your shell: exec zsh   (or open a new terminal)
+  4. build the image:   devbox build
+  5. start it:          devbox start
+  6. log in:            devbox ssh    (first time: accept the host key)
+  7. configure Cursor:  Cmd+Shift+P → Remote-SSH: Connect to Host → devbox
+     Open folder /home/dev/vault/mcp/dockerize (or dockerize.code-workspace on host)
 
 troubleshooting:
   - "permission denied (publickey)" — make sure DEVBOX_HOST_SSH_PUBKEY in

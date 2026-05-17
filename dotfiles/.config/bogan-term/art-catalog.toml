@@ -1,0 +1,467 @@
+# bogan-term art catalog
+#
+# Each piece has:
+#   slug         unique key
+#   display_name human-readable
+#   category     iconic | wildlife | scenery | portraits | characters
+#   source       one of: builtin | photo | placeholder
+#                builtin   = `art` field below is used directly
+#                photo     = render via chafa from ~/.config/bogan-term/photos/<slug>/*
+#                placeholder = no art yet; show a labelled box
+#
+# Web fetch is OUT OF SCOPE for this pass.
+# Drop your own photos into ~/.config/bogan-term/photos/<slug>/ to use the photo source.
+
+# ─── iconic bogan kit ─────────────────────────────────────────────────────────
+
+[[piece]]
+slug = "vb_stubbie"
+display_name = "VB Stubbie"
+category = "iconic"
+source = "builtin"
+art = """
+   ____
+  |    |
+  |_VB_|
+  |    |
+  |    |
+  |____|
+"""
+
+[[piece]]
+slug = "durry"
+display_name = "Durry"
+category = "iconic"
+source = "builtin"
+art = """
+              ~~~
+            ~~
+   ========+----
+"""
+
+[[piece]]
+slug = "snag"
+display_name = "Snag on white bread w/ sauce"
+category = "iconic"
+source = "builtin"
+art = """
+   ___________________
+  /                   \\
+ |  ===================  |
+ |  ~~~~~~~~~~~~~~~~~~~  |
+  \\___________________/
+"""
+
+[[piece]]
+slug = "esky"
+display_name = "Esky"
+category = "iconic"
+source = "builtin"
+art = """
+   ___________________
+  |   ___________     |
+  |  |  ESKY     |    |
+  |  |___________|    |
+  |___________________|
+"""
+
+[[piece]]
+slug = "ute"
+display_name = "Ute"
+category = "iconic"
+source = "builtin"
+art = """
+       _____
+      /     |_____________
+     /            ______   |
+    |   __    __ |      |  |
+    '--(__)--(__)+------'--'
+"""
+
+[[piece]]
+slug = "thongs"
+display_name = "Thongs"
+category = "iconic"
+source = "builtin"
+art = """
+    ___      ___
+   /   \\    /   \\
+  |  o  |  |  o  |
+   \\___/    \\___/
+"""
+
+[[piece]]
+slug = "goon_bag"
+display_name = "Goon Bag"
+category = "iconic"
+source = "builtin"
+art = """
+    ___________
+   |  GOON     |
+   |  ~~~~~~~  |
+   |  ~~~~~~~  |
+   |___________|
+        ||
+       (==)
+"""
+
+# ─── aussie wildlife ──────────────────────────────────────────────────────────
+
+[[piece]]
+slug = "kangaroo"
+display_name = "Kangaroo"
+category = "wildlife"
+source = "builtin"
+art = """
+        __
+       /o \\__
+      ( =====_)
+       \\__/  \\
+         \\\\   \\
+          \\\\   \\__
+           \\\\____)
+"""
+
+[[piece]]
+slug = "drop_bear"
+display_name = "Drop Bear"
+category = "wildlife"
+source = "builtin"
+art = """
+       _---_
+      ( o o )
+       ( ~ )      ← waiting in the gum tree
+      /  v  \\
+     ( /---\\ )
+       w   w
+"""
+
+[[piece]]
+slug = "magpie"
+display_name = "Swooping Magpie"
+category = "wildlife"
+source = "builtin"
+art = """
+        __
+   ___/  \\___
+  <__       __>     OI WATCH IT
+     \\_____/
+       v v
+"""
+
+[[piece]]
+slug = "cassowary"
+display_name = "Cassowary"
+category = "wildlife"
+source = "builtin"
+art = """
+       ___
+      /o  \\
+     | --  |
+      \\___/
+        |
+        |  ← will fuckin' kill ya
+       / \\
+      /   \\
+"""
+
+[[piece]]
+slug = "cane_toad"
+display_name = "Cane Toad"
+category = "wildlife"
+source = "builtin"
+art = """
+     ____________
+    /            \\
+   |  o        o  |
+    \\___/====\\___/
+       _\\____/_
+"""
+
+[[piece]]
+slug = "kookaburra"
+display_name = "Kookaburra"
+category = "wildlife"
+source = "builtin"
+art = """
+      ___
+     (o o)       HA HA HA HA HA
+    <    >
+     \\__/
+"""
+
+# ─── aussie scenery ───────────────────────────────────────────────────────────
+
+[[piece]]
+slug = "hills_hoist"
+display_name = "Hills Hoist"
+category = "scenery"
+source = "builtin"
+art = """
+    \\        /
+     \\      /
+      \\____/
+       |  |
+       |  |
+       |  |
+   ____|  |____
+"""
+
+[[piece]]
+slug = "bunnings_snag"
+display_name = "Bunnings Sausage Sizzle"
+category = "scenery"
+source = "builtin"
+art = """
+   ___________________
+  | BUNNINGS WAREHOUSE |
+  |___________________|
+        ||      ||
+   $1 SNAG     $1 SNAG
+"""
+
+[[piece]]
+slug = "beach_southern_cross"
+display_name = "Beach + Southern Cross"
+category = "scenery"
+source = "builtin"
+art = """
+              *
+        *           *
+              *
+                  *
+
+  ~~~~~~~~~~~~~~~~~~~~~~~~
+  ~~~~~~~~~~~~~~~~~~~~~~~~
+  ........................
+"""
+
+[[piece]]
+slug = "maccas_carpark"
+display_name = "Maccas Carpark"
+category = "scenery"
+source = "builtin"
+art = """
+       M  M
+       MMMM
+   ___________________
+  | M | M | M | M | M |
+  |___|___|___|___|___|
+        2am yeah nah
+"""
+
+[[piece]]
+slug = "servo_2am"
+display_name = "Servo at 2am"
+category = "scenery"
+source = "builtin"
+art = """
+       ----[ SERVO ]----
+       |  ___   ___    |
+       | |   | |   |   |
+       | |___| |___|   |
+       |_______________|
+         pie. dim sim.
+"""
+
+# ─── bogan portraits & symbols ────────────────────────────────────────────────
+
+[[piece]]
+slug = "mullet_bloke"
+display_name = "Mullet Bloke"
+category = "portraits"
+source = "builtin"
+art = """
+       _____
+      /     \\
+     | o   o |
+      \\  v  /
+       |   |\\____
+       |   |     )
+       |___|____/
+       business at the front
+       party at the back
+"""
+
+[[piece]]
+slug = "sharon_goon"
+display_name = "Sharon w/ Goon Bag"
+category = "portraits"
+source = "builtin"
+art = """
+      ___
+     /   \\
+    | o o |
+     \\ v /     [GOON]
+      | |     /
+      |_|____/
+"""
+
+[[piece]]
+slug = "tradies_hivis"
+display_name = "Tradies in Hi-Vis"
+category = "portraits"
+source = "builtin"
+art = """
+   [##] [##] [##]      ← hi-vis crew
+   /||\\ /||\\ /||\\
+    ||   ||   ||
+   /  \\ /  \\ /  \\
+"""
+
+[[piece]]
+slug = "akubra"
+display_name = "Akubra"
+category = "portraits"
+source = "builtin"
+art = """
+       _________
+      /         \\
+   __/___________\\__
+"""
+
+[[piece]]
+slug = "boxing_kangaroo"
+display_name = "Boxing Kangaroo"
+category = "portraits"
+source = "builtin"
+art = """
+        __
+       /o \\__
+      ( =====) [=]   ← red glove
+       \\__/  \\ /
+         \\\\   X
+          \\\\   \\__
+           \\\\____)
+"""
+
+[[piece]]
+slug = "aussie_flag"
+display_name = "Aussie Flag"
+category = "portraits"
+source = "builtin"
+art = """
+   +---------+----------+
+   | + + + + |     *    |
+   |  UK     |   *   *  |
+   | + + + + |     *    |
+   +---------+   *   *  |
+   |    *           *   |
+   |  *                 |
+   +--------------------+
+"""
+
+# ─── named characters ─────────────────────────────────────────────────────────
+# Most of these are placeholders. Drop a photo into
+# ~/.config/bogan-term/photos/<slug>/ and chafa will render it instead.
+# Steve Irwin has a confident hand-ASCII below.
+
+[[piece]]
+slug = "steve_irwin"
+display_name = "Steve Irwin"
+category = "characters"
+source = "builtin"
+art = """
+       _______
+      / KHAKI \\
+     | o     o |
+      \\   v   /
+       |     |       CRIKEY!
+       | ___ |
+      /|     |\\
+     / |_____| \\
+    /__|     |__\\
+       |     |
+       |_____|
+"""
+
+[[piece]]
+slug = "sassy_sasquatch"
+display_name = "Sassy the Sasquatch"
+category = "characters"
+source = "placeholder"
+art = """
+   ┌──────────────────────────┐
+   │  [ SASSY THE SASQUATCH ] │
+   │  art coming —            │
+   │  drop a photo into       │
+   │  ~/.config/bogan-term/   │
+   │     photos/sassy_sasquatch/  │
+   │  or edit art-catalog.toml│
+   └──────────────────────────┘
+"""
+
+[[piece]]
+slug = "choomahs"
+display_name = "Choomahs"
+category = "characters"
+source = "placeholder"
+art = """
+   ┌──────────────────────────┐
+   │  [ CHOOMAHS ]            │
+   │  art coming —            │
+   │  drop photos into        │
+   │  ~/.config/bogan-term/   │
+   │     photos/choomahs/     │
+   └──────────────────────────┘
+"""
+
+[[piece]]
+slug = "quinton"
+display_name = "Quinton"
+category = "characters"
+source = "placeholder"
+art = """
+   ┌──────────────────────────┐
+   │  [ QUINTON ]             │
+   │  art coming —            │
+   │  drop photos into        │
+   │  ~/.config/bogan-term/   │
+   │     photos/quinton/      │
+   └──────────────────────────┘
+"""
+
+[[piece]]
+slug = "mike_nolan"
+display_name = "Mike Nolan"
+category = "characters"
+source = "placeholder"
+art = """
+   ┌──────────────────────────┐
+   │  [ MIKE NOLAN ]          │
+   │  art coming —            │
+   │  drop photos into        │
+   │  ~/.config/bogan-term/   │
+   │     photos/mike_nolan/   │
+   └──────────────────────────┘
+"""
+
+[[piece]]
+slug = "clarence"
+display_name = "Clarence"
+category = "characters"
+source = "placeholder"
+art = """
+   ┌──────────────────────────┐
+   │  [ CLARENCE ]            │
+   │  art coming —            │
+   │  drop photos into        │
+   │  ~/.config/bogan-term/   │
+   │     photos/clarence/     │
+   └──────────────────────────┘
+"""
+
+[[piece]]
+slug = "kerser_225"
+display_name = "Kerser '225'"
+category = "characters"
+source = "placeholder"
+art = """
+   ┌──────────────────────────┐
+   │  [ KERSER · 225 ]        │
+   │  art coming —            │
+   │  drop photos into        │
+   │  ~/.config/bogan-term/   │
+   │     photos/kerser_225/   │
+   └──────────────────────────┘
+"""

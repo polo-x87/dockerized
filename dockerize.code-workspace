@@ -1,0 +1,21 @@
+{
+  "folders": [
+    {
+      "name": "dockerize",
+      "path": "."
+    },
+    {
+      "name": "code",
+      "path": "../../../code"
+    },
+    {
+      "name": "vault",
+      "path": "../.."
+    }
+  ],
+  "settings": {
+    "files.exclude": {
+      "**/.git": true
+    }
+  }
+}

@@ -1,0 +1,28 @@
+{
+  "LOG": true,
+  "API_TIMEOUT_MS": 600000,
+  "Providers": [
+    {
+      "name": "openrouter",
+      "api_base_url": "https://openrouter.ai/api/v1/chat/completions",
+      "api_key": "$OPENROUTER_API_KEY",
+      "models": [
+        "openai/gpt-oss-120b:free",
+        "openai/gpt-oss-20b:free",
+        "deepseek/deepseek-v4-flash:free",
+        "z-ai/glm-4.5-air:free",
+        "meta-llama/llama-3.3-70b-instruct:free"
+      ],
+      "transformer": {
+        "use": ["openrouter"]
+      }
+    }
+  ],
+  "Router": {
+    "default": "openrouter,deepseek/deepseek-v4-flash:free",
+    "background": "openrouter,openai/gpt-oss-20b:free",
+    "think": "openrouter,deepseek/deepseek-v4-flash:free",
+    "longContext": "openrouter,deepseek/deepseek-v4-flash:free",
+    "longContextThreshold": 60000
+  }
+}

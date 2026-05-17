@@ -1,0 +1,13 @@
+# This is Git's per-user configuration file.
+[user]
+	name = polo-x87
+	email = ml.w00sh@gmail.com
+# Please adapt and uncomment the following lines:
+#	name = user
+#	email = user@users-MacBook-Air.local
+[credential "https://github.com"]
+	helper = 
+	helper = !/opt/homebrew/bin/gh auth git-credential
+[credential "https://gist.github.com"]
+	helper = 
+	helper = !/opt/homebrew/bin/gh auth git-credential
