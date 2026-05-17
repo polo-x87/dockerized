@@ -86,6 +86,33 @@ In a project with `.devcontainer/devcontainer.json`: `Cmd+Shift+P → Dev Contai
 
 Both can coexist — use Dev Containers for project work where reproducibility matters, SSH for general "my Linux box" exploration.
 
+## Auditing the image
+
+```bash
+devbox audit         # hadolint + size check + dive + shell-start benchmark
+```
+
+Run before committing changes to `base/Dockerfile`. Falls back gracefully on tools you haven't brewed yet:
+- `brew install hadolint dive hyperfine` to enable the full suite on macOS.
+
+## atuin (shell history) sync — optional
+
+Inside the container, on first launch:
+
+```bash
+atuin-sync-setup     # interactive: register / login / skip
+```
+
+Sync is end-to-end encrypted and entirely optional — atuin works fully offline. The local sqlite database lives at `~/.local/share/atuin/history.db` and survives container restarts via the `devbox-home` named volume.
+
+## lazydocker
+
+```bash
+ld                   # short alias for lazydocker
+```
+
+Config seed lives at `~/.config/jesseduffield/lazydocker/config.yml` (linked from `~/.dotfiles-sample/.config/jesseduffield/lazydocker/config.yml` by `install.sh`).
+
 ## Updating
 
 ```bash
@@ -155,5 +182,18 @@ CLI flags     >   .devbox.env     >   ENV vars     >   embedded defaults
 Hard-validated vars (`DEVBOX_DOTFILES_REPO`, `DEVBOX_DEV_USER`) refuse to proceed with an invalid value. Soft-validated vars (`DEVBOX_CODE_DIR`, `DEVBOX_VAULT_DIR`, `DEVBOX_SSH_PUBKEY`) warn and let you continue — useful when `install-host.sh` will create the SSH key the script is checking for.
 
 **Non-interactive mode** (no TTY, e.g. piped or CI): soft validators warn and accept; hard validators exit 1 immediately.
+
+**Mode menu.** Running `./setup.sh` with no arguments in a terminal opens a mode picker after `ensure_config` finishes:
+
+```
+1) Dry-run all steps (preview only)
+2) Run all steps live
+3) Step-by-step (confirm each step)
+4) Run a single step
+5) Just save .devbox.env and exit
+q) Quit
+```
+
+Mode 3 (step-by-step) prompts before each step with `y` (run), `n` (skip), `d` (dry-run this one), `a` (run all remaining without prompting), or `q` (quit). Mode 4 lists every `step_*` function and asks for a number, then run-vs-dry. Pass `--menu` to force the picker even when other flags are supplied; pass any positional `step_name` to bypass it entirely (existing CLI behavior is unchanged).
 
 Regenerating `setup.sh` from `guide.html` is safe: `.devbox.env` lives separately and is re-sourced by the new copy.

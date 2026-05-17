@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # devbox — daily-driver CLI for the long-lived dev container.
-# Sub-commands: ssh, exec, shell, status, logs, build, rebuild, start, stop, restart.
+# Sub-commands: ssh, exec, shell, status, logs, build, rebuild, start, stop, restart, audit.
 set -euo pipefail
 
 HERE="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
@@ -29,6 +29,7 @@ COMMANDS
     restart             docker compose restart
     sandbox <cmd...>    One-shot ephemeral container (delegates to devbox-sandbox)
     update              Pull the dockerize repo, rebuild base, restart
+    audit               hadolint + dive + image-size + shell-start benchmark
     help                Show this message
 EOF
 }
@@ -74,6 +75,50 @@ case "$cmd" in
         ;;
     update)
         exec "$HERE/devbox-update"
+        ;;
+    audit)
+        # End-to-end image hygiene check. Run before committing Dockerfile changes.
+        # Falls back gracefully when host-side tools aren't installed.
+        DOCKERFILE="$COMPOSE_DIR/Dockerfile"
+        IMG="devbox-base:latest"
+        SIZE_LIMIT_BYTES=$((2 * 1024 * 1024 * 1024))   # 2 GB hard rule
+
+        printf '\n\033[1;36m==> hadolint\033[0m  (Dockerfile lint)\n'
+        if command -v hadolint >/dev/null; then
+            hadolint "$DOCKERFILE" || true
+        else
+            echo "  hadolint not installed — brew install hadolint  (or run inside the container)"
+        fi
+
+        printf '\n\033[1;36m==> image size\033[0m\n'
+        if docker image inspect "$IMG" >/dev/null 2>&1; then
+            SIZE=$(docker image inspect "$IMG" --format '{{.Size}}')
+            HUMAN=$(printf '%s' "$SIZE" | numfmt --to=iec 2>/dev/null || echo "${SIZE} bytes")
+            printf '  %s : %s\n' "$IMG" "$HUMAN"
+            if [ "$SIZE" -gt "$SIZE_LIMIT_BYTES" ]; then
+                printf '\033[1;31m  ✘ exceeds 2 GB hard rule (CLAUDE.md #3)\033[0m\n'
+            else
+                printf '\033[1;32m  ✓ under 2 GB ceiling\033[0m\n'
+            fi
+        else
+            echo "  $IMG not built yet — run: devbox build"
+        fi
+
+        printf '\n\033[1;36m==> dive\033[0m  (layer efficiency, CI mode)\n'
+        if command -v dive >/dev/null && docker image inspect "$IMG" >/dev/null 2>&1; then
+            CI=true dive "$IMG" --ci --highestUserWastedPercent 0.2 || true
+        else
+            echo "  skipped (need both host \`dive\` and a built image)"
+        fi
+
+        printf '\n\033[1;36m==> shell-start benchmark\033[0m\n'
+        if command -v hyperfine >/dev/null && docker image inspect "$IMG" >/dev/null 2>&1; then
+            hyperfine --warmup 3 "docker run --rm $IMG zsh -i -c exit"
+        else
+            echo "  skipped (need host \`hyperfine\` and a built image — brew install hyperfine)"
+        fi
+
+        printf '\ndone.\n'
         ;;
     help|-h|--help)
         usage

@@ -418,14 +418,14 @@
       <table class="compact">
         <thead><tr><th>Category</th><th>Tools</th></tr></thead>
         <tbody>
-          <tr><td>Shell</td><td>zsh, oh-my-zsh, tmux (+ resurrect, continuum)</td></tr>
-          <tr><td>Modern CLI</td><td>fzf, ripgrep, bat, eza, fd, delta, jq, yq, direnv</td></tr>
+          <tr><td>Shell</td><td>zsh, oh-my-zsh (slim), starship prompt, tmux (+ resurrect, continuum)</td></tr>
+          <tr><td>Modern CLI</td><td>fzf, ripgrep, bat, eza, fd, delta, jq, yq, direnv, zoxide, atuin</td></tr>
           <tr><td>VCS</td><td>git, gh</td></tr>
           <tr><td>Languages</td><td>rust (stable), node (mise), python + uv, go (mise), Java 17 (Temurin)</td></tr>
           <tr><td>Android</td><td>SDK platform-tools (adb), build-tools 36.0.0, platforms;android-36</td></tr>
           <tr><td>AI agents</td><td>claude-code, codex, gemini-cli (all via npm)</td></tr>
           <tr><td>Secrets</td><td>1Password CLI (<code>op</code>)</td></tr>
-          <tr><td>Container ops</td><td>docker CLI → host daemon via mounted socket</td></tr>
+          <tr><td>Container ops</td><td>docker CLI → host daemon via mounted socket; <code>lazydocker</code>, <code>ctop</code>, <code>dive</code>, <code>hadolint</code></td></tr>
           <tr><td>Remote access</td><td>sshd on <code>127.0.0.1:2222</code> (base); <code>:2223</code> (swift sidecar)</td></tr>
           <tr><td>Swift (sidecar)</td><td>Swift 6.1 in <code>devbox-swift</code> — <code>docker compose --profile swift up</code></td></tr>
         </tbody>
@@ -462,12 +462,16 @@
 ├── overlays/
 │   └── example-project/  reference .devcontainer/
 ├── scripts/
-│   ├── devbox            daily-driver CLI
-│   ├── devbox-sandbox    ephemeral run for AI agents
-│   ├── devbox-update     pull + rebuild + restart
-│   └── install-host.sh   one-time host setup
+│   ├── devbox              daily-driver CLI (+ `devbox audit` for image hygiene)
+│   ├── devbox-sandbox      ephemeral run for AI agents
+│   ├── devbox-update       pull + rebuild + restart
+│   ├── install-host.sh     one-time host setup (installs hooks too)
+│   ├── install-git-hooks.sh  installs the docs-sync pre-commit hook
+│   └── check-docs-sync.sh  enforces CLAUDE.md Hard rule #8
 └── docs/
     ├── usage.md
+    ├── guide.html
+    ├── cli-mesh.html       interactive tool / config / risk mesh
     └── superpowers/specs/2026-05-16-devbox-design.md</code></pre></div>
 
       <h4>Wipe and restart</h4>

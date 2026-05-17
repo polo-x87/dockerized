@@ -75,6 +75,25 @@ alias devbox-update-dotfiles='cd ~/.dotfiles && git pull && ./install.sh && cd -
 # 1Password CLI — if op session, this is a no-op. Otherwise prompt.
 op-signin() { eval "$(op signin)"; }
 
+# atuin sync — one-time interactive helper. Skips if already configured.
+# Run `atuin-sync-setup` after first shell launch if you want history sync.
+atuin-sync-setup() {
+    if [ -f "$HOME/.local/share/atuin/key" ] || atuin status >/dev/null 2>&1; then
+        echo "atuin: already configured. Use 'atuin login' / 'atuin register' directly if needed."
+        return 0
+    fi
+    echo "atuin sync setup — choose one:"
+    echo "  1) register new account (creates a new key)"
+    echo "  2) login to existing account (paste key)"
+    echo "  3) skip (use atuin offline; history still recorded locally)"
+    read "?> " choice
+    case "$choice" in
+        1) atuin register ;;
+        2) atuin login ;;
+        *) echo "skipped — atuin will work offline." ;;
+    esac
+}
+
 # Editor
 export EDITOR=vim
 export VISUAL=vim

@@ -1,0 +1,314 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>dockerize CLI optimization mesh</title>
+<style>
+  :root { color-scheme: light; }
+  * { box-sizing: border-box; }
+  body { margin: 0; font: 14px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif; color:#1a1a1a; background:#fafafa; }
+  header { padding: 18px 22px 8px; border-bottom: 1px solid #e5e5e5; background:#fff; }
+  h1 { margin:0 0 4px; font-size: 18px; }
+  .sub { color:#6b6b6b; font-size:12px; }
+  .controls { padding: 10px 22px; background:#fff; border-bottom:1px solid #eee; display:flex; gap:6px; flex-wrap:wrap; }
+  .chip { padding:5px 10px; border-radius:999px; border:1px solid #d0d0d0; background:#fff; cursor:pointer; font-size:12px; user-select:none; }
+  .chip.active { background:#111; color:#fff; border-color:#111; }
+  .legend { display:flex; gap:14px; padding: 8px 22px; font-size:11px; color:#555; background:#fff; border-bottom:1px solid #eee; }
+  .legend span::before { content:""; display:inline-block; width:10px; height:10px; border-radius:50%; margin-right:6px; vertical-align:-1px; }
+  .l-have::before { background:#22c55e; }
+  .l-add::before { background:#f59e0b; }
+  .l-watch::before { background:#ef4444; }
+  .l-config::before { background:#3b82f6; }
+  #wrap { display:grid; grid-template-columns: 1fr 360px; gap: 0; }
+  #mesh { height: calc(100vh - 120px); min-height: 620px; background:
+    radial-gradient(circle at 30% 20%, #f3f4f6 0%, transparent 50%),
+    radial-gradient(circle at 70% 80%, #f3f4f6 0%, transparent 50%),
+    #fafafa; position:relative; overflow:hidden; }
+  svg { width:100%; height:100%; }
+  .node circle { stroke:#111; stroke-width:1.2; cursor:pointer; transition: r .15s; }
+  .node:hover circle { r: 22; }
+  .node text { font-size: 11px; pointer-events:none; text-anchor:middle; dominant-baseline:central; fill:#111; font-weight:500; }
+  .edge { stroke:#bbb; stroke-width:1; fill:none; }
+  .edge.hl { stroke:#111; stroke-width:1.6; }
+  .cluster-label { font-size:10px; fill:#999; font-weight:600; text-transform:uppercase; letter-spacing:.05em; }
+  aside { border-left:1px solid #e5e5e5; background:#fff; height: calc(100vh - 120px); min-height:620px; overflow-y:auto; padding: 18px 18px 40px; }
+  aside h2 { font-size:14px; margin: 4px 0 8px; display:flex; align-items:center; gap:8px; }
+  aside h2 .tag { font-size:10px; padding:2px 7px; border-radius:4px; font-weight:600; }
+  .t-have { background:#dcfce7; color:#166534; }
+  .t-add  { background:#fef3c7; color:#92400e; }
+  .t-watch{ background:#fee2e2; color:#991b1b; }
+  .t-config{ background:#dbeafe; color:#1e40af; }
+  aside p { margin: 6px 0; color:#333; font-size:13px; }
+  aside code, .path { font: 11.5px/1.4 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; background:#f3f4f6; padding:1px 5px; border-radius:3px; }
+  aside pre { background:#0f172a; color:#e2e8f0; padding:10px 12px; border-radius:6px; overflow-x:auto; font:11.5px/1.55 ui-monospace, SFMono-Regular, Menlo, monospace; }
+  .meta { font-size:11px; color:#6b6b6b; margin-top:10px; }
+  .meta a { color:#2563eb; text-decoration:none; }
+  .meta a:hover { text-decoration:underline; }
+  .hint { color:#888; font-style:italic; font-size:12px; }
+  @media (max-width: 900px) { #wrap { grid-template-columns: 1fr; } aside { border-left:none; border-top:1px solid #e5e5e5; height:auto; } #mesh { height: 70vh; } }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>dockerize CLI optimization mesh</h1>
+  <div class="sub">Master view of code · tools · network · context-overuse · errors. Click any node for the recipe. Filter by cluster.</div>
+  <div class="sub" style="margin-top:6px; padding:6px 10px; background:#fef3c7; color:#92400e; border-radius:4px; display:inline-block;">
+    <b>Docs-sync rule</b> — any change to <code>base/</code>, <code>scripts/</code>, <code>overlays/</code>, or root configs must update <code>CLAUDE.md</code>, <code>README.md</code>, <code>docs/usage.md</code>, <code>docs/guide.html</code>, and this file in the same commit. <b>Enforced</b> by <code>scripts/check-docs-sync.sh</code> (pre-commit hook, installed via <code>scripts/install-host.sh</code>). Override: <code>SKIP_DOCS_CHECK=1 git commit …</code>. (CLAUDE.md Hard rule #8.)
+  </div>
+</header>
+
+<div class="controls">
+  <span class="chip active" data-filter="all">All</span>
+  <span class="chip" data-filter="shell">Shell</span>
+  <span class="chip" data-filter="cli">CLI core</span>
+  <span class="chip" data-filter="history">History/Nav</span>
+  <span class="chip" data-filter="docker">Docker</span>
+  <span class="chip" data-filter="config">Config files</span>
+  <span class="chip" data-filter="risk">Context-bloat / errors</span>
+</div>
+
+<div class="legend">
+  <span class="l-have">In the image already</span>
+  <span class="l-add">Recommended add</span>
+  <span class="l-config">Config file</span>
+  <span class="l-watch">Bloat / error source</span>
+</div>
+
+<div id="wrap">
+  <div id="mesh">
+    <svg id="svg" viewBox="0 0 900 720" preserveAspectRatio="xMidYMid meet"></svg>
+  </div>
+
+  <aside id="detail">
+    <p class="hint">Hover a node, click to pin. Edges show config dependencies & data flow.</p>
+  </aside>
+</div>
+
+<script>
+// ─────────────────────────────────────────────────────────────
+// Mesh data — node statuses: have | add | config | watch
+// ─────────────────────────────────────────────────────────────
+const nodes = [
+  // Shell cluster
+  { id:"zsh",       cluster:"shell",   x:130, y:120, status:"have",   label:"zsh",
+    desc:"Login shell baked at /usr/bin/zsh in Stage 2 of base/Dockerfile.",
+    file:"/Users/user/vault/mcp/dockerize/base/Dockerfile" },
+  { id:"omz",       cluster:"shell",   x:240, y:80,  status:"config", label:"oh-my-zsh",
+    desc:"Loaded by .zshrc. Currently uses `robbyrussell` theme + git plugin — both add ~80–150ms to every prompt. Slim to keep interactive snappy.",
+    file:"/Users/user/vault/mcp/dockerize/base/dotfiles-sample/.zshrc" },
+  { id:"starship",  cluster:"shell",   x:340, y:130, status:"have",   label:"starship",
+    desc:"Replace robbyrussell. Lazy-evaluated modules (only renders git when in a repo, etc.). Drops prompt latency dramatically. Single static binary.",
+    install:"curl -sS https://starship.rs/install.sh | sh -s -- -y -b /usr/local/bin",
+    dev:"starship/starship — Matan Kushner" },
+  { id:"autosug",   cluster:"shell",   x:200, y:200, status:"have",   label:"autosuggest",
+    desc:"zsh-autosuggestions — already cloned into $ZSH_CUSTOM in cli-tools stage." },
+  { id:"syntax",    cluster:"shell",   x:300, y:230, status:"have",   label:"syntax-hl",
+    desc:"zsh-syntax-highlighting — same install path." },
+  { id:"fzftab",    cluster:"shell",   x:90,  y:230, status:"have",   label:"fzf-tab",
+    desc:"Replaces zsh's default tab-completion with fzf UI." },
+
+  // CLI core
+  { id:"fzf",       cluster:"cli",     x:470, y:80,  status:"have",   label:"fzf",
+    desc:"Already installed. Ctrl-R / Ctrl-T / Alt-C bindings sourced from /usr/share/doc/fzf/examples." },
+  { id:"rg",        cluster:"cli",     x:560, y:130, status:"have",   label:"ripgrep",
+    desc:"BurntSushi/ripgrep — already aliased as `grep`. Pair with fzf for live preview." },
+  { id:"bat",       cluster:"cli",     x:620, y:80,  status:"have",   label:"bat",
+    desc:"sharkdp/bat — aliased `cat`/`less`. Used as fzf preview engine." },
+  { id:"fd",        cluster:"cli",     x:660, y:160, status:"have",   label:"fd",
+    desc:"sharkdp/fd — aliased `find`. Faster, sensible defaults." },
+  { id:"eza",       cluster:"cli",     x:520, y:200, status:"have",   label:"eza",
+    desc:"`ls` replacement with git column. APT repo via deb.gierens.de added in Stage 1." },
+  { id:"delta",     cluster:"cli",     x:600, y:230, status:"have",   label:"delta",
+    desc:"dandavison/delta — syntax-highlighted git diffs. .deb fetched from GitHub releases." },
+  { id:"jq",        cluster:"cli",     x:700, y:240, status:"have",   label:"jq" },
+  { id:"yq",        cluster:"cli",     x:760, y:180, status:"have",   label:"yq",
+    desc:"mikefarah/yq — Go version, fetched in Stage 1." },
+  { id:"direnv",    cluster:"cli",     x:430, y:170, status:"have",   label:"direnv",
+    desc:"Auto-loads .envrc on cd. Already hooked in .zshrc." },
+
+  // History / navigation
+  { id:"zoxide",    cluster:"history", x:80,  y:340, status:"have",   label:"zoxide",
+    desc:"Frecency-based `cd`. Rebinds `cd` so `cd foo` jumps to the most-used dir matching `foo`. 5x fewer keystrokes for navigation.",
+    install:"curl -sSfL https://raw.githubusercontent.com/ajeetdsouza/zoxide/main/install.sh | bash -s -- --bin-dir /usr/local/bin",
+    rc:"eval \"$(zoxide init zsh --cmd cd)\"",
+    dev:"ajeetdsouza/zoxide" },
+  { id:"atuin",     cluster:"history", x:200, y:380, status:"have",   label:"atuin",
+    desc:"SQLite-backed shell history with full-text search, per-directory recall, optional E2E sync across machines. Replaces Ctrl-R.",
+    install:"curl --proto '=https' --tlsv1.2 -LsSf https://setup.atuin.sh | sh",
+    rc:"eval \"$(atuin init zsh --disable-up-arrow)\"",
+    dev:"atuinsh/atuin — Ellie Huxtable" },
+  { id:"tmux",      cluster:"history", x:340, y:340, status:"have",   label:"tmux",
+    desc:"+ resurrect + continuum (15-min autosave). Sessions survive container restarts via the devbox-home named volume." },
+
+  // Docker ergonomics
+  { id:"docker",    cluster:"docker",  x:500, y:340, status:"have",   label:"docker CLI",
+    desc:"docker-ce-cli + buildx + compose plugin. Daemon stays on host (OrbStack); socket bind-mounted at /var/run/docker.sock." },
+  { id:"lazydocker",cluster:"docker",  x:620, y:310, status:"have",   label:"lazydocker",
+    desc:"TUI for containers/images/logs. Browse logs, exec, restart without remembering flags. Single Go binary.",
+    install:"curl -fsSL https://raw.githubusercontent.com/jesseduffield/lazydocker/master/scripts/install_update_linux.sh | DIR=/usr/local/bin bash",
+    dev:"jesseduffield/lazydocker" },
+  { id:"dive",      cluster:"docker",  x:740, y:340, status:"have",   label:"dive",
+    desc:"Image-layer analyzer. Directly serves CLAUDE.md hard rule #3 (<2 GB). Shows which layer added what, wasted bytes, efficiency score.",
+    install:"DIVE_VERSION=0.13.1; curl -fsSL -o /tmp/dive.deb https://github.com/wagoodman/dive/releases/download/v${DIVE_VERSION}/dive_${DIVE_VERSION}_linux_amd64.deb && dpkg -i /tmp/dive.deb && rm /tmp/dive.deb",
+    dev:"wagoodman/dive" },
+  { id:"ctop",      cluster:"docker",  x:660, y:400, status:"have",   label:"ctop",
+    desc:"top-style live view of all running containers. CPU/mem/net/io per container; one keystroke to logs/exec.",
+    install:"curl -fsSL -o /usr/local/bin/ctop https://github.com/bcicen/ctop/releases/download/v0.7.7/ctop-0.7.7-linux-amd64 && chmod +x /usr/local/bin/ctop",
+    dev:"bcicen/ctop" },
+  { id:"hadolint",  cluster:"docker",  x:520, y:430, status:"have",   label:"hadolint",
+    desc:"Dockerfile linter (shellcheck-aware). Wire into a pre-commit hook so base/Dockerfile and overlays stay clean.",
+    install:"curl -fsSL -o /usr/local/bin/hadolint https://github.com/hadolint/hadolint/releases/latest/download/hadolint-Linux-x86_64 && chmod +x /usr/local/bin/hadolint",
+    dev:"hadolint/hadolint" },
+  { id:"slim",      cluster:"docker",  x:780, y:430, status:"add",    label:"slim",
+    desc:"Image minifier. Run against a finished image to strip unused files based on observed runtime. Optional; useful when an overlay creeps above 2 GB.",
+    dev:"slimtoolkit/slim — Kyle Quest" },
+
+  // Config files
+  { id:"dockerfile",cluster:"config",  x:80,  y:520, status:"config", label:"Dockerfile",
+    desc:"Stage 1 (`system`) is where the new tools go — apt + curl-release pattern already established for gh/eza/delta/yq.",
+    file:"/Users/user/vault/mcp/dockerize/base/Dockerfile" },
+  { id:"compose",   cluster:"config",  x:210, y:560, status:"config", label:"docker-compose",
+    desc:"Socket mount + named volumes. No changes needed for the CLI upgrades — they're all binaries in the image.",
+    file:"/Users/user/vault/mcp/dockerize/base/docker-compose.yml" },
+  { id:"zshrc",     cluster:"config",  x:350, y:520, status:"config", label:".zshrc",
+    desc:"Where the new init lines land. Also where you slim the OMZ plugin array to cut prompt latency.",
+    file:"/Users/user/vault/mcp/dockerize/base/dotfiles-sample/.zshrc" },
+  { id:"guide",     cluster:"config",  x:470, y:560, status:"config", label:"guide.html",
+    desc:"CLAUDE.md hard rule #1: single source of truth for user-facing artifacts. When you change Dockerfile or .zshrc, update the generator here too.",
+    file:"/Users/user/vault/mcp/dockerize/docs/guide.html" },
+
+  // Risk / bloat / errors
+  { id:"omz-git",   cluster:"risk",    x:80,  y:640, status:"watch",  label:"OMZ git plugin",
+    desc:"BLOAT: ~150 aliases + functions on every shell init. ~50–80ms parse cost. Remove `git` from plugins=() — your manual g/gs/gd/gl aliases already cover it." },
+  { id:"theme",     cluster:"risk",    x:220, y:680, status:"watch",  label:"robbyrussell",
+    desc:"BLOAT: runs `git status` synchronously on every prompt even outside repos. Swap to starship — only triggers in repos and runs in <10ms." },
+  { id:"agents",    cluster:"risk",    x:360, y:640, status:"watch",  label:"3 AI agents",
+    desc:"BLOAT: claude + codex + gemini all installed globally via npm in Stage 4 (~250 MB combined). Reasonable for a multi-agent box, but you can drop to one per overlay if image creeps over 2 GB." },
+  { id:"size",      cluster:"risk",    x:500, y:680, status:"watch",  label:"2 GB ceiling",
+    desc:"ERROR: hard rule. Check after every Dockerfile change: `docker image inspect devbox-base:latest --format '{{.Size}}'`. Use `dive` to diagnose." },
+  { id:"sock",      cluster:"risk",    x:640, y:640, status:"watch",  label:"docker.sock GID",
+    desc:"ERROR class: container can exec docker but gets EACCES. entrypoint.sh re-aligns the `docker` group GID. If you bypass the entrypoint (e.g., `docker run … bash`), you'll see this." },
+  { id:"keys",      cluster:"risk",    x:780, y:680, status:"watch",  label:"API keys in image",
+    desc:"ERROR class: CLAUDE.md hard rule #4. Never bake keys into the image. Use `op run --env-file=…` (alias bundle exists, commented in .zshrc — uncomment after `op signin`)." },
+  { id:"docsync",   cluster:"config",  x:600, y:520, status:"config", label:"docs-sync hook",
+    desc:"Pre-commit hook enforcing CLAUDE.md Hard rule #8: blocks commits that touch base/scripts/overlays/root configs without staging docs. Installed automatically by scripts/install-host.sh.",
+    file:"/Users/user/vault/mcp/dockerize/scripts/check-docs-sync.sh",
+    install:"scripts/install-git-hooks.sh",
+    rc:"# bypass when truly irrelevant:\nSKIP_DOCS_CHECK=1 git commit ...\ngit commit --no-verify" },
+];
+
+// Edges
+const edges = [
+  ["zsh","omz"], ["omz","autosug"], ["omz","syntax"], ["omz","fzftab"],
+  ["zsh","starship"], ["zshrc","starship"], ["zshrc","omz"],
+  ["zshrc","zoxide"], ["zshrc","atuin"], ["zshrc","direnv"], ["zshrc","fzf"],
+  ["fzf","rg"], ["fzf","bat"], ["fzf","fd"], ["fzf","fzftab"],
+  ["dockerfile","zsh"], ["dockerfile","starship"], ["dockerfile","zoxide"],
+  ["dockerfile","atuin"], ["dockerfile","lazydocker"], ["dockerfile","dive"],
+  ["dockerfile","ctop"], ["dockerfile","hadolint"], ["dockerfile","docker"],
+  ["compose","docker"], ["compose","sock"],
+  ["docker","lazydocker"], ["docker","dive"], ["docker","ctop"],
+  ["docker","hadolint"], ["docker","slim"],
+  ["guide","dockerfile"], ["guide","zshrc"], ["guide","compose"],
+  ["omz-git","omz"], ["theme","omz"], ["agents","dockerfile"],
+  ["size","dockerfile"], ["size","dive"], ["size","agents"],
+  ["keys","zshrc"], ["keys","compose"],
+  ["tmux","zshrc"], ["atuin","tmux"],
+  ["docsync","dockerfile"], ["docsync","compose"], ["docsync","zshrc"], ["docsync","guide"],
+];
+
+const colors = { have:"#22c55e", add:"#f59e0b", config:"#3b82f6", watch:"#ef4444" };
+const clusterLabels = {
+  shell:    { x:215, y:50,  text:"Shell"      },
+  cli:      { x:600, y:50,  text:"CLI core"   },
+  history:  { x:210, y:300, text:"History / Nav" },
+  docker:   { x:640, y:280, text:"Docker ergonomics" },
+  config:   { x:280, y:495, text:"Config files" },
+  risk:     { x:430, y:605, text:"Context bloat & error sources" },
+};
+
+const svg = document.getElementById("svg");
+const NS = "http://www.w3.org/2000/svg";
+
+// cluster labels
+Object.values(clusterLabels).forEach(c => {
+  const t = document.createElementNS(NS,"text");
+  t.setAttribute("x", c.x); t.setAttribute("y", c.y);
+  t.setAttribute("class","cluster-label"); t.textContent = c.text;
+  svg.appendChild(t);
+});
+
+// edges
+const edgeEls = {};
+edges.forEach(([a,b]) => {
+  const A = nodes.find(n=>n.id===a), B = nodes.find(n=>n.id===b);
+  if (!A || !B) return;
+  const line = document.createElementNS(NS,"line");
+  line.setAttribute("class","edge");
+  line.setAttribute("x1",A.x); line.setAttribute("y1",A.y);
+  line.setAttribute("x2",B.x); line.setAttribute("y2",B.y);
+  svg.appendChild(line);
+  edgeEls[a+"|"+b] = line;
+});
+
+// nodes
+const nodeEls = {};
+nodes.forEach(n => {
+  const g = document.createElementNS(NS,"g");
+  g.setAttribute("class","node");
+  g.setAttribute("data-cluster", n.cluster);
+  g.setAttribute("data-id", n.id);
+  g.setAttribute("transform", `translate(${n.x},${n.y})`);
+  const c = document.createElementNS(NS,"circle");
+  c.setAttribute("r", 18); c.setAttribute("fill", colors[n.status]);
+  const t = document.createElementNS(NS,"text");
+  t.setAttribute("y", 30); t.textContent = n.label;
+  g.appendChild(c); g.appendChild(t);
+  g.addEventListener("mouseenter", () => showDetail(n));
+  g.addEventListener("click",      () => { pinned = n.id; showDetail(n); });
+  svg.appendChild(g);
+  nodeEls[n.id] = g;
+});
+
+// detail panel
+const detail = document.getElementById("detail");
+let pinned = null;
+function showDetail(n) {
+  highlightEdges(n.id);
+  const tagClass = "t-" + n.status;
+  const tagText = { have:"installed", add:"add", config:"config", watch:"watch" }[n.status];
+  let html = `<h2>${n.label} <span class="tag ${tagClass}">${tagText}</span></h2>`;
+  if (n.desc) html += `<p>${n.desc}</p>`;
+  if (n.file) html += `<p><span class="path">${n.file}</span></p>`;
+  if (n.install) html += `<p><b>Install</b></p><pre>${n.install}</pre>`;
+  if (n.rc) html += `<p><b>.zshrc line</b></p><pre>${n.rc}</pre>`;
+  if (n.dev) html += `<p class="meta">Source: ${n.dev}</p>`;
+  detail.innerHTML = html;
+}
+function highlightEdges(id) {
+  Object.entries(edgeEls).forEach(([k, el]) => {
+    const [a,b] = k.split("|");
+    el.classList.toggle("hl", a===id || b===id);
+  });
+}
+
+// filters
+document.querySelectorAll(".chip").forEach(chip => {
+  chip.addEventListener("click", () => {
+    document.querySelectorAll(".chip").forEach(c => c.classList.remove("active"));
+    chip.classList.add("active");
+    const f = chip.dataset.filter;
+    Object.values(nodeEls).forEach(g => {
+      const c = g.dataset.cluster;
+      g.style.opacity = (f === "all" || c === f) ? 1 : 0.15;
+    });
+  });
+});
+
+// initial detail
+showDetail(nodes.find(n=>n.id==="starship"));
+</script>
+
+</body>
+</html>

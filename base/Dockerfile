@@ -76,6 +76,50 @@ RUN curl -fsSL -o /usr/local/bin/yq \
         "https://github.com/mikefarah/yq/releases/latest/download/yq_linux_${TARGETARCH:-amd64}" && \
     chmod +x /usr/local/bin/yq
 
+# starship — fast, lazy, cross-shell prompt (replaces oh-my-zsh themes)
+RUN curl -sS https://starship.rs/install.sh \
+        | sh -s -- -y -b /usr/local/bin
+
+# zoxide — frecency-ranked `cd` replacement (ajeetdsouza/zoxide)
+RUN ZOXIDE_VERSION="0.9.6" && \
+    ARCH_ZOXIDE=$(case "${TARGETARCH:-amd64}" in amd64) echo "x86_64-unknown-linux-musl";; arm64) echo "aarch64-unknown-linux-musl";; esac) && \
+    curl -fsSL -o /tmp/zoxide.tgz \
+        "https://github.com/ajeetdsouza/zoxide/releases/download/v${ZOXIDE_VERSION}/zoxide-${ZOXIDE_VERSION}-${ARCH_ZOXIDE}.tar.gz" && \
+    tar -xzf /tmp/zoxide.tgz -C /usr/local/bin zoxide && \
+    chmod +x /usr/local/bin/zoxide && \
+    rm /tmp/zoxide.tgz
+
+# atuin — sqlite-backed shell history with search + optional E2E sync (atuinsh/atuin)
+RUN ATUIN_VERSION="18.4.0" && \
+    ARCH_ATUIN=$(case "${TARGETARCH:-amd64}" in amd64) echo "x86_64-unknown-linux-gnu";; arm64) echo "aarch64-unknown-linux-gnu";; esac) && \
+    curl -fsSL -o /tmp/atuin.tgz \
+        "https://github.com/atuinsh/atuin/releases/download/v${ATUIN_VERSION}/atuin-${ARCH_ATUIN}.tar.gz" && \
+    tar -xzf /tmp/atuin.tgz -C /tmp && \
+    install -m 0755 "/tmp/atuin-${ARCH_ATUIN}/atuin" /usr/local/bin/atuin && \
+    rm -rf /tmp/atuin.tgz "/tmp/atuin-${ARCH_ATUIN}"
+
+# lazydocker — TUI for containers, images, volumes (jesseduffield/lazydocker)
+RUN curl -fsSL https://raw.githubusercontent.com/jesseduffield/lazydocker/master/scripts/install_update_linux.sh \
+        | DIR=/usr/local/bin bash
+
+# dive — image-layer analyzer; directly supports the <2GB hard rule (wagoodman/dive)
+RUN DIVE_VERSION="0.13.1" && \
+    curl -fsSL -o /tmp/dive.deb \
+        "https://github.com/wagoodman/dive/releases/download/v${DIVE_VERSION}/dive_${DIVE_VERSION}_linux_${TARGETARCH:-amd64}.deb" && \
+    dpkg -i /tmp/dive.deb && \
+    rm /tmp/dive.deb
+
+# ctop — top-style live container monitor (bcicen/ctop)
+RUN curl -fsSL -o /usr/local/bin/ctop \
+        "https://github.com/bcicen/ctop/releases/download/v0.7.7/ctop-0.7.7-linux-${TARGETARCH:-amd64}" && \
+    chmod +x /usr/local/bin/ctop
+
+# hadolint — Dockerfile linter, shellcheck-aware (hadolint/hadolint)
+RUN ARCH_HADOLINT=$(case "${TARGETARCH:-amd64}" in amd64) echo "x86_64";; arm64) echo "arm64";; esac) && \
+    curl -fsSL -o /usr/local/bin/hadolint \
+        "https://github.com/hadolint/hadolint/releases/latest/download/hadolint-Linux-${ARCH_HADOLINT}" && \
+    chmod +x /usr/local/bin/hadolint
+
 # 1Password CLI
 RUN ARCH="${TARGETARCH:-amd64}" && \
     curl -fsSL -o /tmp/op.zip \

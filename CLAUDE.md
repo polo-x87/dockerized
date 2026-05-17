@@ -42,6 +42,7 @@ mcp_workflow.md       separate Python research-system Dockerfile pattern (consum
 | `base/docker-compose.yml` | `docker compose config` validates YAML; then `devbox start && devbox ssh` |
 | `base/entrypoint.sh` | rebuild + `docker compose up -d --force-recreate`; check `docker logs devbox` |
 | `scripts/*` | `shellcheck scripts/*` and run the affected command end-to-end |
+| `scripts/devbox audit` (any audit step) | `devbox audit` end-to-end with the relevant tool installed; verify failure modes too |
 | `docs/guide.html` | open in a browser; visit each tab; ensure every output is **valid for direct copy-paste** |
 | `docs/cli-mesh.html` | open in a browser; click each node; confirm install snippets + absolute paths still match `base/Dockerfile` and `base/dotfiles-sample/.zshrc` |
 | `overlays/example-project/.devcontainer/` | `cp -r` into a scratch repo, `Cursor → Dev Containers: Reopen` |
