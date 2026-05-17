@@ -1,0 +1,37 @@
+# Edit name/email after first boot, or replace this entire file via your dotfiles repo.
+[user]
+    name = Your Name
+    email = you@example.com
+
+[init]
+    defaultBranch = main
+
+[core]
+    editor = vim
+    pager = delta
+
+[interactive]
+    diffFilter = delta --color-only
+
+[delta]
+    navigate = true
+    light = false
+    line-numbers = true
+
+[merge]
+    conflictstyle = zdiff3
+
+[diff]
+    colorMoved = default
+
+[pull]
+    rebase = false
+
+[push]
+    autoSetupRemote = true
+
+[alias]
+    co = checkout
+    br = branch
+    st = status -sb
+    lg = log --oneline --graph --decorate -n 20

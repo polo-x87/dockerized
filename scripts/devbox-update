@@ -1,0 +1,26 @@
+#!/usr/bin/env bash
+# devbox-update — refresh the dockerize repo, rebuild the base image, restart.
+# Run weekly-ish, or after editing the Dockerfile.
+set -euo pipefail
+
+HERE="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+REPO_ROOT="$HERE/.."
+COMPOSE_DIR="$REPO_ROOT/base"
+
+echo ">> git pull (if this is a clone of a repo)"
+if [ -d "$REPO_ROOT/.git" ]; then
+    git -C "$REPO_ROOT" pull --ff-only
+else
+    echo "   (not a git checkout — skipping)"
+fi
+
+echo ">> docker compose build (BuildKit, with cache)"
+cd "$COMPOSE_DIR"
+DOCKER_BUILDKIT=1 docker compose build
+
+echo ">> restart devbox to pick up new image"
+docker compose up -d --force-recreate
+
+echo ">> done. Image size:"
+docker image inspect devbox-base:latest \
+    --format '   devbox-base:latest  ~{{div .Size 1048576}} MB'

@@ -1,0 +1,4 @@
+# Global mise tool versions. Per-project overrides go in each project's mise.toml.
+[tools]
+node = "lts"
+go = "latest"

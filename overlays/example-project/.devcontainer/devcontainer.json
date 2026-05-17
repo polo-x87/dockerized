@@ -1,0 +1,36 @@
+{
+  "name": "example-project",
+  "build": {
+    "dockerfile": "Dockerfile",
+    "context": ".."
+  },
+  "remoteUser": "dev",
+  "containerUser": "dev",
+  "updateRemoteUserUID": true,
+
+  "workspaceFolder": "/home/dev/code/example-project",
+  "workspaceMount": "source=${localWorkspaceFolder},target=/home/dev/code/example-project,type=bind,consistency=cached",
+
+  "mounts": [
+    "source=devbox-cache,target=/home/dev/.cache,type=volume",
+    "source=devbox-tools,target=/home/dev/.local,type=volume",
+    "source=/var/run/docker.sock,target=/var/run/docker.sock,type=bind"
+  ],
+
+  "forwardPorts": [],
+  "postCreateCommand": "mise install && uv sync || true",
+
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "rust-lang.rust-analyzer",
+        "ms-python.python",
+        "tamasfe.even-better-toml",
+        "esbenp.prettier-vscode"
+      ],
+      "settings": {
+        "terminal.integrated.defaultProfile.linux": "zsh"
+      }
+    }
+  }
+}

@@ -1,0 +1,86 @@
+#!/usr/bin/env bash
+# devbox — daily-driver CLI for the long-lived dev container.
+# Sub-commands: ssh, exec, shell, status, logs, build, rebuild, start, stop, restart.
+set -euo pipefail
+
+HERE="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+COMPOSE_DIR="$HERE/../base"
+
+cmd="${1:-help}"
+shift || true
+
+usage() {
+    cat <<'EOF'
+devbox — manage the long-lived dev container
+
+USAGE
+    devbox <command> [args...]
+
+COMMANDS
+    ssh                 SSH into the container as user `dev`
+    shell               Open an interactive zsh shell (via docker exec)
+    exec <cmd...>       Run a command inside as `dev`
+    status              Show container status + image size
+    logs [-f]           Tail container logs
+    build               docker compose build
+    rebuild             Force rebuild from scratch
+    start               docker compose up -d
+    stop                docker compose stop
+    restart             docker compose restart
+    sandbox <cmd...>    One-shot ephemeral container (delegates to devbox-sandbox)
+    update              Pull the dockerize repo, rebuild base, restart
+    help                Show this message
+EOF
+}
+
+case "$cmd" in
+    ssh)
+        ssh -F "$HOME/.ssh/config" devbox "$@"
+        ;;
+    shell)
+        docker exec -it -u dev devbox /usr/bin/zsh -l
+        ;;
+    exec)
+        docker exec -it -u dev devbox "$@"
+        ;;
+    status)
+        docker ps --filter name=devbox --format \
+            'table {{.Names}}\t{{.Status}}\t{{.Ports}}'
+        echo
+        docker image inspect devbox-base:latest \
+            --format 'devbox-base:latest  size: {{.Size}} bytes  (~{{div .Size 1048576}} MB)' \
+            2>/dev/null || echo "devbox-base:latest not built yet — run: devbox build"
+        ;;
+    logs)
+        docker logs "${1:-}" devbox 2>&1
+        ;;
+    build)
+        cd "$COMPOSE_DIR" && DOCKER_BUILDKIT=1 docker compose build
+        ;;
+    rebuild)
+        cd "$COMPOSE_DIR" && DOCKER_BUILDKIT=1 docker compose build --no-cache
+        ;;
+    start|up)
+        cd "$COMPOSE_DIR" && docker compose up -d
+        ;;
+    stop|down)
+        cd "$COMPOSE_DIR" && docker compose stop
+        ;;
+    restart)
+        cd "$COMPOSE_DIR" && docker compose restart
+        ;;
+    sandbox)
+        exec "$HERE/devbox-sandbox" "$@"
+        ;;
+    update)
+        exec "$HERE/devbox-update"
+        ;;
+    help|-h|--help)
+        usage
+        ;;
+    *)
+        echo "devbox: unknown command '$cmd'" >&2
+        usage >&2
+        exit 1
+        ;;
+esac

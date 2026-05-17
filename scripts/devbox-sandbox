@@ -1,0 +1,58 @@
+#!/usr/bin/env bash
+# devbox-sandbox — run an AI agent (or anything) in a fresh, ephemeral container.
+#
+# No host mounts. Container is destroyed on exit. Optional --offline blocks network.
+#
+# Example:
+#   devbox-sandbox claude
+#   devbox-sandbox --offline bash -c 'curl http://example.com'   # will fail to resolve
+set -euo pipefail
+
+NETWORK="bridge"
+NAME="sandbox-$(date +%s)-$$"
+
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --offline)
+            NETWORK="none"
+            shift
+            ;;
+        --name)
+            NAME="$2"
+            shift 2
+            ;;
+        --)
+            shift
+            break
+            ;;
+        -h|--help)
+            cat <<'EOF'
+devbox-sandbox — ephemeral run in a fresh devbox-base container.
+
+USAGE
+    devbox-sandbox [--offline] [--name NAME] [--] [command...]
+
+DEFAULTS
+    Image:    devbox-base:latest
+    Network:  bridge  (use --offline for none)
+    Mounts:   none — sandbox is isolated from the host filesystem
+    Cleanup:  --rm (container removed on exit)
+EOF
+            exit 0
+            ;;
+        *)
+            break
+            ;;
+    esac
+done
+
+# Default to an interactive shell if no command given
+if [ $# -eq 0 ]; then
+    set -- /usr/local/bin/entrypoint.sh shell
+fi
+
+exec docker run --rm -it \
+    --name "$NAME" \
+    --hostname "$NAME" \
+    --network "$NETWORK" \
+    devbox-base:latest "$@"

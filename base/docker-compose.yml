@@ -1,0 +1,91 @@
+# devbox base — long-lived portable dev container.
+# Run from this directory: docker compose up -d
+#
+# Configure via base/.env (copy from base/.env.example):
+#   DOTFILES_REPO=git@github.com:you/dotfiles.git
+#   DEVBOX_HOST_CODE_DIR=/Users/you/code
+#   DEVBOX_HOST_SSH_PUBKEY=/Users/you/.ssh/devbox_ed25519.pub
+
+services:
+  devbox:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      cache_from:
+        - devbox-base:latest
+    image: devbox-base:latest
+    container_name: devbox
+    hostname: devbox
+    restart: unless-stopped
+    init: true
+
+    # SSH on loopback only — do not expose to the LAN
+    ports:
+      - "127.0.0.1:${DEVBOX_HOST_SSH_PORT:-2222}:22"
+
+    environment:
+      DEV_USER: dev
+      DOTFILES_REPO: ${DOTFILES_REPO:-}
+      # Forward any AI agent keys you want available inside.
+      # Prefer using 1Password CLI at runtime (op run -- claude ...) over baking these.
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+
+    volumes:
+      # --- Host bind mounts ----------------------------------------------
+      # Your project tree (fast I/O, edits in Cursor are instant in container)
+      - "${DEVBOX_HOST_CODE_DIR:-~/code}:/home/dev/code"
+
+      # Vault workspace — the full ~/vault/ tree for wiki, aeon-rn, ccode, etc.
+      - "${DEVBOX_HOST_VAULT_DIR:-~/vault}:/home/dev/vault"
+
+      # Docker-from-Docker: container can drive host's OrbStack daemon
+      - /var/run/docker.sock:/var/run/docker.sock
+
+      # SSH public key for login from host
+      - "${DEVBOX_HOST_SSH_PUBKEY:-~/.ssh/devbox_ed25519.pub}:/home/dev/.ssh/authorized_keys:ro"
+
+      # --- Named volumes (persist across container delete/rebuild) -------
+      - devbox-home:/home/dev
+      - devbox-cache:/home/dev/.cache
+      - devbox-tools:/home/dev/.local
+      - devbox-config:/home/dev/.config
+      - devbox-gradle:/home/dev/.gradle
+      - devbox-android-avd:/home/dev/.android
+
+  devbox-swift:
+    profiles: ["swift"]
+    build:
+      context: .
+      dockerfile: Dockerfile.swift
+      cache_from:
+        - devbox-swift:latest
+    image: devbox-swift:latest
+    container_name: devbox-swift
+    hostname: devbox-swift
+    restart: unless-stopped
+    init: true
+
+    ports:
+      - "127.0.0.1:2223:22"
+
+    environment:
+      DEV_USER: dev
+      DOTFILES_REPO: ${DOTFILES_REPO:-}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+
+    volumes:
+      - "${DEVBOX_HOST_VAULT_DIR:-~/vault}:/home/dev/vault"
+      - /var/run/docker.sock:/var/run/docker.sock
+      - "${DEVBOX_HOST_SSH_PUBKEY:-~/.ssh/devbox_ed25519.pub}:/home/dev/.ssh/authorized_keys:ro"
+      - devbox-swift-home:/home/dev
+
+volumes:
+  devbox-home:
+  devbox-cache:
+  devbox-tools:
+  devbox-config:
+  devbox-gradle:
+  devbox-android-avd:
+  devbox-swift-home:

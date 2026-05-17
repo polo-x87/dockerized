@@ -1,0 +1,1954 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>devbox + MCP — interactive guide</title>
+  <meta name="description" content="Guided research, installation, and configuration for the devbox container stack and mobile MCP workflows." />
+
+  <!-- Pico.css v2 (color variant swapped at runtime) -->
+  <link id="picoCss" rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css" />
+
+  <style>
+    :root {
+      --gutter: 1rem;
+      --mono: ui-monospace, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+    }
+
+    body { padding-bottom: 4rem; }
+
+    /* Sticky top bar */
+    header.app-bar {
+      position: sticky; top: 0; z-index: 30;
+      background: var(--pico-background-color);
+      border-bottom: 1px solid var(--pico-muted-border-color);
+      padding-block: 0.6rem;
+      backdrop-filter: blur(8px);
+    }
+    .app-bar .row {
+      display: flex; align-items: center; gap: var(--gutter); flex-wrap: wrap;
+    }
+    .app-bar h1 {
+      margin: 0; font-size: 1.05rem; line-height: 1.2;
+      white-space: nowrap;
+    }
+    .app-bar h1 small { color: var(--pico-muted-color); font-weight: 400; }
+    .app-bar .grow { flex: 1; }
+    .app-bar .controls { display: flex; gap: 0.4rem; align-items: center; }
+    .app-bar select, .app-bar input[type="search"] {
+      margin: 0; padding: 0.3rem 0.55rem; font-size: 0.9rem; height: auto;
+    }
+    .app-bar button {
+      margin: 0; padding: 0.3rem 0.65rem; font-size: 0.9rem;
+    }
+
+    /* Tab strip */
+    nav.tabs { display: flex; gap: 0.25rem; margin: 0; flex-wrap: wrap; }
+    nav.tabs button {
+      margin: 0; padding: 0.35rem 0.9rem; font-size: 0.92rem;
+      background: transparent; color: var(--pico-color);
+      border: 1px solid var(--pico-muted-border-color); border-bottom: none;
+      border-radius: 8px 8px 0 0;
+    }
+    nav.tabs button[aria-selected="true"] {
+      background: var(--pico-primary-background);
+      color: var(--pico-primary-inverse);
+      border-color: var(--pico-primary);
+    }
+
+    /* Progress strip */
+    .progress-strip {
+      display: flex; align-items: center; gap: 0.7rem; font-size: 0.85rem;
+      color: var(--pico-muted-color);
+    }
+    .progress-strip progress { width: 14rem; margin: 0; height: 0.6rem; }
+
+    /* Panels */
+    section[role="tabpanel"] { padding-block: 1rem; }
+    section[hidden] { display: none !important; }
+
+    /* Research */
+    details.research-card {
+      border: 1px solid var(--pico-muted-border-color);
+      border-radius: 8px;
+      margin-block: 0.6rem;
+      padding: 0.4rem 1rem;
+      background: var(--pico-card-background-color, transparent);
+    }
+    details.research-card[open] { padding-bottom: 1rem; }
+    details.research-card summary {
+      cursor: pointer; padding: 0.5rem 0; font-weight: 600;
+      list-style: none;
+    }
+    details.research-card summary::-webkit-details-marker { display: none; }
+    details.research-card summary::before {
+      content: "▸"; display: inline-block; margin-right: 0.5rem;
+      transition: transform 0.15s ease;
+    }
+    details.research-card[open] summary::before { transform: rotate(90deg); }
+
+    /* Tables in research */
+    table.compact { font-size: 0.92rem; }
+    table.compact th, table.compact td { padding: 0.4rem 0.6rem; }
+
+    /* Code blocks with copy button */
+    .code-wrap { position: relative; }
+    .code-wrap > button.copy {
+      position: absolute; top: 0.45rem; right: 0.45rem;
+      padding: 0.2rem 0.55rem; font-size: 0.75rem; margin: 0;
+      background: var(--pico-secondary-background);
+      color: var(--pico-secondary-inverse);
+      border: none; border-radius: 4px;
+      opacity: 0; transition: opacity 0.15s;
+    }
+    .code-wrap:hover > button.copy { opacity: 1; }
+    .code-wrap > button.copy.copied { opacity: 1; background: var(--pico-primary); }
+    pre {
+      font-family: var(--mono); font-size: 0.82rem;
+      padding: 0.9rem; padding-top: 1.7rem;
+      overflow-x: auto;
+      border-radius: 6px;
+      max-height: 32rem;
+    }
+    pre code { background: transparent; padding: 0; font-size: inherit; }
+    code { font-family: var(--mono); font-size: 0.88em; }
+
+    /* Install checklist */
+    ol.steps { list-style: none; padding: 0; margin: 0; }
+    ol.steps > li {
+      border: 1px solid var(--pico-muted-border-color);
+      border-radius: 8px;
+      margin-block: 0.65rem;
+      padding: 0.8rem 1rem;
+      display: grid; grid-template-columns: auto 1fr; gap: 0.7rem 1rem;
+      align-items: start;
+    }
+    ol.steps > li.done {
+      border-color: var(--pico-primary);
+      background: var(--pico-primary-background);
+      opacity: 0.85;
+    }
+    ol.steps > li.done h4 { text-decoration: line-through; }
+    ol.steps input[type="checkbox"] {
+      margin-top: 0.4rem; width: 1.25rem; height: 1.25rem;
+    }
+    ol.steps h4 {
+      margin: 0; font-size: 1rem;
+    }
+    ol.steps h4 .step-tag {
+      display: inline-block; font-size: 0.72rem;
+      padding: 0.05rem 0.4rem; border-radius: 999px;
+      background: var(--pico-secondary-background);
+      color: var(--pico-secondary-inverse);
+      margin-left: 0.5rem; vertical-align: middle;
+      font-weight: 500;
+    }
+    ol.steps p.rationale { margin: 0.25rem 0 0.4rem; color: var(--pico-muted-color); font-size: 0.92rem; }
+    ol.steps .step-body { min-width: 0; }
+    .group-heading {
+      margin-block: 1.4rem 0.4rem; font-size: 0.78rem;
+      letter-spacing: 0.08em; text-transform: uppercase;
+      color: var(--pico-muted-color);
+    }
+
+    /* Configure grid */
+    .config-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 22rem) minmax(0, 1fr);
+      gap: 1.2rem;
+    }
+    @media (max-width: 900px) {
+      .config-grid { grid-template-columns: 1fr; }
+    }
+    fieldset.form-section {
+      border: 1px solid var(--pico-muted-border-color);
+      border-radius: 8px; padding: 0.7rem 1rem 0.5rem; margin-block: 0.5rem;
+    }
+    fieldset.form-section legend {
+      padding: 0 0.4rem; font-weight: 600; font-size: 0.95rem;
+    }
+    fieldset.form-section label {
+      font-size: 0.88rem; display: block; margin-block: 0.3rem 0.1rem;
+    }
+    fieldset.form-section input, fieldset.form-section select, fieldset.form-section textarea {
+      margin-bottom: 0.4rem; padding: 0.35rem 0.5rem; font-size: 0.88rem; height: auto;
+    }
+    .checkbox-row { display: flex; gap: 0.9rem; flex-wrap: wrap; margin-block: 0.3rem 0.5rem; }
+    .checkbox-row label { display: inline-flex; gap: 0.4rem; align-items: center; margin: 0; }
+    .radio-row { display: flex; gap: 0.9rem; flex-wrap: wrap; margin-block: 0.3rem 0.5rem; }
+    .radio-row label { display: inline-flex; gap: 0.4rem; align-items: center; margin: 0; }
+
+    /* Output tabs */
+    .output-tabs { display: flex; flex-wrap: wrap; gap: 0.25rem; margin-bottom: 0.4rem; }
+    .output-tabs button {
+      margin: 0; padding: 0.3rem 0.7rem; font-size: 0.8rem;
+      background: transparent; color: var(--pico-color);
+      border: 1px solid var(--pico-muted-border-color);
+      border-radius: 4px;
+    }
+    .output-tabs button[aria-selected="true"] {
+      background: var(--pico-primary); color: var(--pico-primary-inverse);
+      border-color: var(--pico-primary);
+    }
+    .output-pane { display: none; }
+    .output-pane.active { display: block; }
+    .output-actions { display: flex; gap: 0.5rem; margin-bottom: 0.4rem; }
+    .output-actions button { margin: 0; padding: 0.3rem 0.7rem; font-size: 0.85rem; }
+
+    /* Footer */
+    footer.app-footer {
+      margin-top: 3rem; padding-block: 1rem;
+      border-top: 1px solid var(--pico-muted-border-color);
+      font-size: 0.85rem; color: var(--pico-muted-color);
+      display: flex; gap: 1rem; flex-wrap: wrap; align-items: center;
+    }
+    footer.app-footer button.reset { margin: 0; padding: 0.3rem 0.7rem; font-size: 0.85rem; }
+
+    /* Hidden by filter */
+    .filtered-out { display: none !important; }
+
+    /* Subdued helper text */
+    .muted { color: var(--pico-muted-color); }
+    kbd {
+      background: var(--pico-secondary-background); color: var(--pico-secondary-inverse);
+      padding: 0.1rem 0.35rem; border-radius: 3px; font-size: 0.78rem;
+      font-family: var(--mono);
+    }
+    .pill {
+      display: inline-block; padding: 0.05rem 0.5rem; font-size: 0.72rem;
+      border-radius: 999px; background: var(--pico-secondary-background);
+      color: var(--pico-secondary-inverse);
+      margin-left: 0.4rem; vertical-align: middle;
+    }
+  </style>
+</head>
+<body>
+
+<!-- ============================================================ -->
+<!-- HEADER                                                       -->
+<!-- ============================================================ -->
+<header class="app-bar">
+  <div class="container">
+    <div class="row">
+      <h1>devbox + MCP <small>— interactive guide</small></h1>
+
+      <nav class="tabs" role="tablist" aria-label="Sections">
+        <button role="tab" data-tab="research"  aria-selected="true">Research</button>
+        <button role="tab" data-tab="install"   aria-selected="false">Install</button>
+        <button role="tab" data-tab="configure" aria-selected="false">Configure</button>
+      </nav>
+
+      <span class="grow"></span>
+
+      <div class="controls">
+        <input type="search" id="searchBox" placeholder="Search…  (/)" aria-label="Search research content" />
+        <select id="themeSelect" aria-label="Color theme">
+          <option value="">default</option>
+          <option value="amber">amber</option>
+          <option value="blue">blue</option>
+          <option value="cyan">cyan</option>
+          <option value="fuchsia">fuchsia</option>
+          <option value="green">green</option>
+          <option value="indigo">indigo</option>
+          <option value="jade">jade</option>
+          <option value="lime">lime</option>
+          <option value="orange">orange</option>
+          <option value="pink">pink</option>
+          <option value="pumpkin">pumpkin</option>
+          <option value="purple">purple</option>
+          <option value="red">red</option>
+          <option value="sand">sand</option>
+          <option value="slate">slate</option>
+          <option value="violet">violet</option>
+          <option value="yellow">yellow</option>
+          <option value="zinc">zinc</option>
+        </select>
+        <button id="modeToggle" class="secondary" title="Toggle light/dark">🌓</button>
+      </div>
+    </div>
+
+    <div class="row" style="margin-top: 0.4rem;">
+      <div class="progress-strip">
+        <strong>Install progress:</strong>
+        <progress id="installProgress" max="17" value="0"></progress>
+        <span id="installCount">0 / 17</span>
+      </div>
+      <span class="grow"></span>
+      <span class="muted" style="font-size:0.8rem;">
+        Source: <code>~/vault/mcp/</code> · State stored in browser <kbd>localStorage</kbd>
+      </span>
+    </div>
+  </div>
+</header>
+
+<main class="container">
+
+  <!-- ============================================================ -->
+  <!-- TAB 1 — RESEARCH                                             -->
+  <!-- ============================================================ -->
+  <section id="tab-research" role="tabpanel" aria-labelledby="research-tab">
+
+    <p class="muted">
+      A guided tour through the mobile MCP stack and the devbox portable Linux container.
+      Every section is collapsible. Code blocks copy on hover. Use <kbd>/</kbd> to filter.
+    </p>
+
+    <!-- ===== Mobile MCP stack ===== -->
+    <details class="research-card" open>
+      <summary>The mobile MCP stack <span class="pill">connectors</span></summary>
+
+      <p>
+        MCP (Model Context Protocol) gives AI models the "eyes and hands" required for
+        mobile dev. Three open-source servers cover the typical surface area:
+      </p>
+
+      <h4 style="margin-top:0.8rem;">@mobilenext/mobile-mcp</h4>
+      <p>Most robust cross-platform UI driver. Uses <code>adb</code> (Android) and
+        <code>xcrun simctl</code> (iOS) alongside native Accessibility APIs.</p>
+      <table class="compact">
+        <thead><tr><th>Tool</th><th>Purpose</th></tr></thead>
+        <tbody>
+          <tr><td><code>get_ui_tree</code></td><td>Reads the on-screen widget hierarchy</td></tr>
+          <tr><td><code>tap_element</code></td><td>Click by text, accessibility ID, or coordinates</td></tr>
+          <tr><td><code>swipe</code></td><td>Scrolling through lists or pages</td></tr>
+          <tr><td><code>take_screenshot</code></td><td>Visual verification back to a vision model</td></tr>
+        </tbody>
+      </table>
+
+      <h4 style="margin-top:0.8rem;">@expo/mcp-server</h4>
+      <p>Gold standard for React Native dev. Reads the exact SDK-version docs,
+         controls EAS (cloud builds + deployments), pulls crash logs from TestFlight /
+         Play Console, manages deps via <code>npx expo install</code>.</p>
+
+      <h4 style="margin-top:0.8rem;">Marionette MCP (Flutter)</h4>
+      <p>Connects directly to the <strong>Flutter VM Service</strong> — bypasses
+         the opaque accessibility tree. Tap widgets by Dart <code>Key</code> or
+         Widget type, run integration smoke tests.</p>
+    </details>
+
+    <!-- ===== Cursor vs Claude Code ===== -->
+    <details class="research-card">
+      <summary>Cursor vs. Claude Code — two workflow styles</summary>
+
+      <h4>Cursor: closed-loop visual</h4>
+      <ol>
+        <li>Editor on one side, simulator on the other.</li>
+        <li><code>mobile-mcp</code> wired in Cursor settings.</li>
+        <li>Prompt → code → trigger hot reload → screenshot → vision-analyze → self-correct.</li>
+      </ol>
+      <blockquote class="muted">
+        "Build a settings screen with a dark mode toggle. Run it on the simulator." →
+        Cursor writes the SwiftUI / Compose / RN, takes a screenshot, notices
+        misalignment, adjusts padding.
+      </blockquote>
+
+      <h4>Claude Code (CLI): DevOps &amp; architecture</h4>
+      <p>Best for refactors and CI/CD across thousands of files.</p>
+      <blockquote class="muted">
+        "Upgrade React Native 0.73 → 0.74. Handle breaking changes, update the Podfile,
+        run the iOS build." → reads Expo MCP docs, runs <code>npm install</code> /
+        <code>pod install</code> / <code>xcodebuild</code>, parses log on failure,
+        patches Obj-C/Java autonomously, retries.
+      </blockquote>
+    </details>
+
+    <!-- ===== Dev containers vs host emulators ===== -->
+    <details class="research-card">
+      <summary>Dev containers vs. host emulators — the bridging problem</summary>
+      <p>
+        When Cursor runs inside a Linux dev container and emulators run on macOS,
+        MCP commands execute inside the container. <code>xcrun simctl</code> is
+        macOS-exclusive and cannot be installed in Linux — period.
+      </p>
+
+      <h4>Android (easy)</h4>
+      <ol>
+        <li>Start the emulator on macOS.</li>
+        <li>Ensure ADB server is running: <code>adb start-server</code> on the Mac.</li>
+        <li>Install <code>adb</code> client in the dev container.</li>
+        <li>Point the client at the host: <code>export ADB_SERVER_SOCKET=tcp:host.docker.internal:5037</code>.</li>
+      </ol>
+
+      <h4>iOS (requires SSE)</h4>
+      <ol>
+        <li>Run <code>mobile-mcp</code> directly on the Mac host.</li>
+        <li>Expose it over <strong>SSE</strong> (Server-Sent Events), e.g. <code>http://host.docker.internal:8080/mcp</code>.</li>
+        <li>Configure Cursor inside the container to point at the SSE URL instead of a local <code>command</code>.</li>
+      </ol>
+      <p class="muted">
+        Note: if Cursor's UI doesn't accept SSE directly, run a small in-container
+        proxy that bridges stdio ↔ the host SSE socket.
+      </p>
+    </details>
+
+    <!-- ===== Skills / rules ===== -->
+    <details class="research-card">
+      <summary>Skills, rules, and specialized agents</summary>
+      <p>
+        Skills shape <em>how</em> the AI writes code. Two flavors matter:
+      </p>
+      <h4>Callstack React Native skill</h4>
+      <p>Teaches the AI to prefer <code>React.memo</code>, avoid anonymous render-loop functions,
+         use <code>FlashList</code> over <code>FlatList</code>, securely build Native Modules.</p>
+
+      <h4>Project-specific rules (.cursorrules / CLAUDE.md)</h4>
+      <ul>
+        <li><strong>State management:</strong> "Always Zustand slices; never Redux. Put global state in <code>src/store</code>."</li>
+        <li><strong>UI components:</strong> "Only use <code>@ui/components</code>. No inline CSS for buttons."</li>
+        <li><strong>Testing:</strong> "Every new Flutter screen must ship with a Widget test under <code>test/</code> using mockito."</li>
+      </ul>
+    </details>
+
+    <!-- ===== devbox stack ===== -->
+    <details class="research-card" open>
+      <summary>The devbox container <span class="pill">portable dev box</span></summary>
+
+      <p>A slim Debian-bookworm Docker image, multi-stage build, target size <strong>~1.5 GB</strong>
+         (Swift toolchain lives in an optional sidecar image).
+         Runtime on OrbStack (free for personal use; falls back to Docker Desktop or Podman).</p>
+
+      <h4>Three modes</h4>
+      <ol>
+        <li><strong>Long-lived dev box.</strong> Start once, survive Mac reboots, SSH in.</li>
+        <li><strong>AI agent sandbox.</strong> Ephemeral, no host mounts, destroyed on exit.</li>
+        <li><strong>Per-project dev container.</strong> Each repo's <code>.devcontainer/</code> extends the base.</li>
+      </ol>
+
+      <h4>What's inside</h4>
+      <table class="compact">
+        <thead><tr><th>Category</th><th>Tools</th></tr></thead>
+        <tbody>
+          <tr><td>Shell</td><td>zsh, oh-my-zsh, tmux (+ resurrect, continuum)</td></tr>
+          <tr><td>Modern CLI</td><td>fzf, ripgrep, bat, eza, fd, delta, jq, yq, direnv</td></tr>
+          <tr><td>VCS</td><td>git, gh</td></tr>
+          <tr><td>Languages</td><td>rust (stable), node (mise), python + uv, go (mise), Java 17 (Temurin)</td></tr>
+          <tr><td>Android</td><td>SDK platform-tools (adb), build-tools 36.0.0, platforms;android-36</td></tr>
+          <tr><td>AI agents</td><td>claude-code, codex, gemini-cli (all via npm)</td></tr>
+          <tr><td>Secrets</td><td>1Password CLI (<code>op</code>)</td></tr>
+          <tr><td>Container ops</td><td>docker CLI → host daemon via mounted socket</td></tr>
+          <tr><td>Remote access</td><td>sshd on <code>127.0.0.1:2222</code> (base); <code>:2223</code> (swift sidecar)</td></tr>
+          <tr><td>Swift (sidecar)</td><td>Swift 6.1 in <code>devbox-swift</code> — <code>docker compose --profile swift up</code></td></tr>
+        </tbody>
+      </table>
+
+      <h4>Synced-on-reboot</h4>
+      <table class="compact">
+        <thead><tr><th>Layer</th><th>Mechanism</th></tr></thead>
+        <tbody>
+          <tr><td>OrbStack runtime</td><td>Open at Login (OrbStack pref)</td></tr>
+          <tr><td>devbox container</td><td><code>restart: unless-stopped</code></td></tr>
+          <tr><td>Shell history / agent state</td><td>Named volume <code>devbox-home</code></td></tr>
+          <tr><td>Caches</td><td>Named volume <code>devbox-cache</code></td></tr>
+          <tr><td>Toolchain (mise-installed)</td><td>Named volume <code>devbox-tools</code></td></tr>
+          <tr><td>App config</td><td>Named volume <code>devbox-config</code></td></tr>
+          <tr><td>Gradle / Android</td><td>Named volumes <code>devbox-gradle</code>, <code>devbox-android-avd</code></td></tr>
+          <tr><td>Swift sidecar home</td><td>Named volume <code>devbox-swift-home</code> (profile: swift)</td></tr>
+          <tr><td>Your code</td><td>Bind-mount from <code>~/code</code> on Mac</td></tr>
+          <tr><td>Your vault</td><td>Bind-mount from <code>~/vault</code> on Mac</td></tr>
+          <tr><td>Dotfiles</td><td>Cloned from <code>DOTFILES_REPO</code> first boot; <code>git pull</code> later</td></tr>
+          <tr><td>tmux sessions</td><td>tmux-resurrect + tmux-continuum (autosave 15 min)</td></tr>
+        </tbody>
+      </table>
+
+      <h4>Layout</h4>
+      <div class="code-wrap"><pre><code>dockerize/
+├── base/                 the devbox-base image
+│   ├── Dockerfile        multi-stage build (5 stages)
+│   ├── Dockerfile.swift  Swift 6.1 sidecar (extends devbox-base)
+│   ├── docker-compose.yml
+│   ├── entrypoint.sh     sshd + dotfiles bootstrap
+│   ├── .env.example      copy to .env and fill in
+│   └── dotfiles-sample/  starter dotfiles
+├── overlays/
+│   └── example-project/  reference .devcontainer/
+├── scripts/
+│   ├── devbox            daily-driver CLI
+│   ├── devbox-sandbox    ephemeral run for AI agents
+│   ├── devbox-update     pull + rebuild + restart
+│   └── install-host.sh   one-time host setup
+└── docs/
+    ├── usage.md
+    └── superpowers/specs/2026-05-16-devbox-design.md</code></pre></div>
+
+      <h4>Wipe and restart</h4>
+      <div class="code-wrap"><pre><code>cd base
+docker compose down -v       # also deletes the named volumes
+docker compose up -d         # image rebuilds, dotfiles re-clone</code></pre></div>
+    </details>
+
+    <!-- ===== Common problems ===== -->
+    <details class="research-card">
+      <summary>Common problems &amp; fixes</summary>
+      <dl>
+        <dt><strong>"permission denied (publickey)" on <code>devbox ssh</code></strong></dt>
+        <dd>Public key in <code>base/.env</code> (<code>DEVBOX_HOST_SSH_PUBKEY</code>) must match the
+            private key in <code>~/.ssh/config</code>. Defaults: <code>~/.ssh/devbox_ed25519.pub</code> ↔
+            <code>~/.ssh/devbox_ed25519</code>. <code>install-host.sh</code> handles both.</dd>
+
+        <dt><strong>"port 2222 already in use"</strong></dt>
+        <dd>Edit <code>base/docker-compose.yml</code>, change the host-side of
+            <code>127.0.0.1:2222:22</code>, update <code>~/.ssh/config</code> to match.</dd>
+
+        <dt><strong>"docker: not found" inside the container</strong></dt>
+        <dd>The CLI is installed but needs <code>/var/run/docker.sock</code> bind-mount.
+            Compose does this; <code>docker run</code> one-offs may have omitted it.</dd>
+
+        <dt><strong>Docker permission errors on the socket</strong></dt>
+        <dd><code>entrypoint.sh</code> re-aligns the docker group's GID to the mounted socket.
+            If you bypassed the entrypoint, <code>sudo</code> until you reinvoke it properly.</dd>
+
+        <dt><strong>Slow bind-mounted <code>~/code</code></strong></dt>
+        <dd>You're on Docker Desktop's default. Switch to OrbStack (VirtioFS) — dramatically faster.</dd>
+
+        <dt><strong>tmux sessions don't restore</strong></dt>
+        <dd>First time only: run <code>tmux</code>, press <kbd>Ctrl-a + I</kbd> (capital i) to install
+            plugins via tpm. After that, continuum autosaves every 15 min and restores on launch.</dd>
+
+        <dt><strong>Claude/Codex/Gemini missing config</strong></dt>
+        <dd>Run each once interactively to auth. Configs persist in the <code>devbox-config</code>
+            named volume across rebuilds.</dd>
+
+        <dt><strong>Image > 2 GB</strong></dt>
+        <dd><code>docker history devbox-base:latest</code> shows the heaviest layer.
+            Usual suspects: too many cargo binaries baked in; move some to a per-project overlay.
+            Swift is already in a separate sidecar (<code>Dockerfile.swift</code>) to keep base at ~1.5 GB.</dd>
+      </dl>
+    </details>
+
+    <!-- ===== Research-system Dockerfile ===== -->
+    <details class="research-card">
+      <summary>Research-system Dockerfile pattern <span class="pill">Python multi-stage</span></summary>
+      <p>From <code>dockerize/mcp_workflow.md</code> — containerize a Python "Research Routine"
+         (master + agents) with minimal final image and SQLite-backed persistence.</p>
+
+      <h4>Multi-stage Dockerfile</h4>
+      <div class="code-wrap"><pre><code># --- Stage 1: Builder ---
+FROM python:3.11-slim as builder
+
+WORKDIR /app
+
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+
+RUN apt-get update && apt-get install -y --no-install-recommends gcc python3-dev
+
+COPY research_system/requirements.txt .
+RUN pip install --user --no-cache-dir -r requirements.txt
+
+# --- Stage 2: Runner ---
+FROM python:3.11-slim as runner
+
+WORKDIR /app
+
+COPY --from=builder /root/.local /root/.local
+COPY research_system/ .
+
+ENV PATH=/root/.local/bin:$PATH
+
+VOLUME ["/app/data"]
+
+CMD ["python", "master.py"]</code></pre></div>
+
+      <h4>Compose with master + N agents</h4>
+      <div class="code-wrap"><pre><code>version: '3.8'
+services:
+  master:
+    build: .
+    image: research-system:latest
+    container_name: research_master
+    volumes:
+      - ./research_data:/app/data
+    env_file:
+      - .g_env
+    restart: always
+
+  agent-1:
+    image: research-system:latest
+    container_name: research_agent_1
+    command: python agent.py 1
+    volumes:
+      - ./research_data:/app/data
+    env_file:
+      - .g_env
+    depends_on:
+      - master</code></pre></div>
+
+      <h4>.dockerignore essentials</h4>
+      <p>Crucial for keeping the build context tiny:</p>
+      <div class="code-wrap"><pre><code>venv/
+.git
+*.db
+*.log
+__pycache__/
+.g_env</code></pre></div>
+    </details>
+
+    <!-- ===== Secrets ===== -->
+    <details class="research-card">
+      <summary>AI agent secrets — env vs 1Password</summary>
+
+      <h4>Option A: env vars at runtime (simple)</h4>
+      <p>In <code>base/.env</code>:</p>
+      <div class="code-wrap"><pre><code>ANTHROPIC_API_KEY=sk-ant-...
+OPENAI_API_KEY=sk-...
+GEMINI_API_KEY=...</code></pre></div>
+      <p class="muted">Downside: keys live in plaintext on disk.</p>
+
+      <h4>Option B: 1Password CLI at runtime (recommended)</h4>
+      <ol>
+        <li>Sign into <code>op</code> from the host once (biometric).</li>
+        <li>Forward <code>op</code> via SSH agent or mount a service-account token.</li>
+        <li>Wrap each agent invocation with <code>op run</code>:</li>
+      </ol>
+      <div class="code-wrap"><pre><code>op run --env-file=~/.config/op/claude.env -- claude
+
+# claude.env:
+ANTHROPIC_API_KEY=op://Personal/Anthropic/api_key</code></pre></div>
+    </details>
+
+  </section>
+
+  <!-- ============================================================ -->
+  <!-- TAB 2 — INSTALL                                              -->
+  <!-- ============================================================ -->
+  <section id="tab-install" role="tabpanel" hidden aria-labelledby="install-tab">
+
+    <p class="muted">
+      Tick each step as you go. Progress persists across reloads. Some steps
+      depend on choices in the <a href="#" data-jump="configure">Configure</a> tab —
+      MCP wiring shows the platforms you picked there.
+    </p>
+
+    <div class="script-sync" style="margin-bottom:1.2rem; display:flex; align-items:center; gap:0.8rem; flex-wrap:wrap;">
+      <button id="syncFromScriptBtn" class="secondary" style="margin:0; font-size:0.88rem; padding:0.3rem 0.7rem;">
+        Sync from script
+      </button>
+      <span style="font-size:0.85rem; color:var(--pico-muted-color);">
+        Import <code>.devbox-setup-state.json</code> written by <code>setup.sh</code> to update checkboxes and detected values.
+      </span>
+      <input type="file" id="stateFileInput" accept=".json" style="display:none" />
+      <span id="syncStatus" style="font-size:0.82rem;"></span>
+    </div>
+
+    <h3 class="group-heading">A. Host setup</h3>
+    <ol class="steps" id="stepsList">
+      <!-- populated by JS -->
+    </ol>
+
+  </section>
+
+  <!-- ============================================================ -->
+  <!-- TAB 3 — CONFIGURE                                            -->
+  <!-- ============================================================ -->
+  <section id="tab-configure" role="tabpanel" hidden aria-labelledby="configure-tab">
+
+    <p class="muted">
+      Choose your options on the left. Generated artifacts on the right update live.
+      Copy directly or download files with the right name.
+    </p>
+
+    <div class="config-grid">
+
+      <!-- ===== Left: form ===== -->
+      <form id="configForm" onsubmit="event.preventDefault();">
+
+        <fieldset class="form-section">
+          <legend>Project basics</legend>
+          <label>Project name
+            <input type="text" name="projectName" value="example-project" />
+          </label>
+          <label>Mac architecture
+            <select name="arch">
+              <option value="arm64">arm64 (Apple Silicon)</option>
+              <option value="amd64">amd64 (Intel)</option>
+            </select>
+          </label>
+          <label>Docker runtime
+            <select name="runtime">
+              <option value="orbstack">OrbStack</option>
+              <option value="docker-desktop">Docker Desktop</option>
+              <option value="podman">Podman</option>
+            </select>
+          </label>
+          <label>SSH host port
+            <input type="number" name="sshPort" value="2222" min="1024" max="65535" />
+          </label>
+          <label>Host code dir
+            <input type="text" name="codeDir" value="/Users/you/code" />
+          </label>
+          <label>Host vault dir
+            <input type="text" name="vaultDir" value="~/vault" />
+          </label>
+        </fieldset>
+
+        <fieldset class="form-section">
+          <legend>Identity &amp; dotfiles</legend>
+          <label>Dev user inside container
+            <input type="text" name="devUser" value="dev" />
+          </label>
+          <label>SSH public key path on Mac
+            <input type="text" name="sshPubkey" value="/Users/you/.ssh/devbox_ed25519.pub" />
+          </label>
+          <label>Dotfiles repo (git URL)
+            <input type="text" name="dotfilesRepo" value="git@github.com:you/dotfiles.git" />
+          </label>
+        </fieldset>
+
+        <fieldset class="form-section">
+          <legend>Secrets mode</legend>
+          <div class="radio-row">
+            <label><input type="radio" name="secretsMode" value="env" checked /> A — plain env</label>
+            <label><input type="radio" name="secretsMode" value="op" /> B — 1Password CLI</label>
+          </div>
+          <div id="envFields">
+            <label>ANTHROPIC_API_KEY
+              <input type="text" name="anthropicKey" placeholder="sk-ant-…" />
+            </label>
+            <label>OPENAI_API_KEY
+              <input type="text" name="openaiKey" placeholder="sk-…" />
+            </label>
+            <label>GEMINI_API_KEY
+              <input type="text" name="geminiKey" placeholder="…" />
+            </label>
+          </div>
+          <div id="opFields" hidden>
+            <label>1Password vault
+              <input type="text" name="opVault" value="Personal" />
+            </label>
+            <label class="muted" style="font-size:0.8rem;">
+              References will use <code>op://VAULT/Anthropic/api_key</code> style.
+            </label>
+          </div>
+        </fieldset>
+
+        <fieldset class="form-section">
+          <legend>MCP platforms</legend>
+          <div class="checkbox-row">
+            <label><input type="checkbox" name="mcpAndroid" checked /> Android (mobile-mcp + adb)</label>
+            <label><input type="checkbox" name="mcpIos" /> iOS (SSE)</label>
+            <label><input type="checkbox" name="mcpFlutter" /> Flutter (Marionette)</label>
+            <label><input type="checkbox" name="mcpExpo" /> React Native (Expo)</label>
+          </div>
+          <label>iOS SSE URL (host)
+            <input type="text" name="iosSseUrl" value="http://host.docker.internal:8080/mcp" />
+          </label>
+          <label>Target editor
+            <select name="mcpTarget">
+              <option value="cursor">Cursor (<code>~/.cursor/mcp.json</code>)</option>
+              <option value="claude-code">Claude Code (<code>.mcp.json</code>)</option>
+            </select>
+          </label>
+        </fieldset>
+
+        <fieldset class="form-section">
+          <legend>Per-project overlay</legend>
+          <label>Primary language
+            <select name="overlayLang">
+              <option value="node">Node / TypeScript</option>
+              <option value="python">Python</option>
+              <option value="rust">Rust</option>
+              <option value="go">Go</option>
+            </select>
+          </label>
+          <label>Extra apt packages (space-separated)
+            <input type="text" name="extraApt" placeholder="e.g. postgresql-client redis-tools" />
+          </label>
+          <label>VS Code / Cursor extensions (comma-separated)
+            <input type="text" name="extensions" value="rust-lang.rust-analyzer, ms-python.python, tamasfe.even-better-toml, esbenp.prettier-vscode" />
+          </label>
+        </fieldset>
+
+        <fieldset class="form-section">
+          <legend>Research-system Dockerfile</legend>
+          <label>Python version
+            <select name="pyVersion">
+              <option value="3.11">3.11</option>
+              <option value="3.12">3.12</option>
+              <option value="3.13">3.13</option>
+            </select>
+          </label>
+          <label>Data volume path (inside container)
+            <input type="text" name="dataVolume" value="/app/data" />
+          </label>
+          <label>Master command
+            <input type="text" name="masterCmd" value="python master.py" />
+          </label>
+          <label>Number of agents
+            <input type="number" name="numAgents" value="2" min="0" max="8" />
+          </label>
+        </fieldset>
+      </form>
+
+      <!-- ===== Right: outputs ===== -->
+      <div>
+        <div class="output-tabs" role="tablist">
+          <button role="tab" data-out="env"        aria-selected="true">.env</button>
+          <button role="tab" data-out="compose"    aria-selected="false">docker-compose.yml</button>
+          <button role="tab" data-out="devcontainer" aria-selected="false">.devcontainer/devcontainer.json</button>
+          <button role="tab" data-out="mcp"        aria-selected="false">MCP config</button>
+          <button role="tab" data-out="setup-sh"             aria-selected="false">setup.sh</button>
+          <button role="tab" data-out="research-dockerfile" aria-selected="false">research Dockerfile</button>
+          <button role="tab" data-out="research-compose"    aria-selected="false">research compose</button>
+        </div>
+
+        <div class="output-pane active" data-out="env">
+          <div class="output-actions">
+            <button class="copy-out" data-target="out-env">Copy</button>
+            <button class="download-out" data-target="out-env" data-filename=".env">Download</button>
+          </div>
+          <div class="code-wrap"><pre><code id="out-env"></code></pre></div>
+        </div>
+
+        <div class="output-pane" data-out="compose">
+          <div class="output-actions">
+            <button class="copy-out" data-target="out-compose">Copy</button>
+            <button class="download-out" data-target="out-compose" data-filename="docker-compose.yml">Download</button>
+          </div>
+          <div class="code-wrap"><pre><code id="out-compose"></code></pre></div>
+        </div>
+
+        <div class="output-pane" data-out="devcontainer">
+          <div class="output-actions">
+            <button class="copy-out" data-target="out-devcontainer">Copy</button>
+            <button class="download-out" data-target="out-devcontainer" data-filename="devcontainer.json">Download</button>
+          </div>
+          <div class="code-wrap"><pre><code id="out-devcontainer"></code></pre></div>
+        </div>
+
+        <div class="output-pane" data-out="mcp">
+          <div class="output-actions">
+            <button class="copy-out" data-target="out-mcp">Copy</button>
+            <button class="download-out" data-target="out-mcp" data-filename="mcp.json">Download</button>
+          </div>
+          <p id="out-mcp-hint" class="muted" style="margin: 0 0 0.4rem; font-size: 0.85rem;"></p>
+          <div class="code-wrap"><pre><code id="out-mcp"></code></pre></div>
+        </div>
+
+        <div class="output-pane" data-out="setup-sh">
+          <div class="output-actions">
+            <button class="copy-out" data-target="out-setup-sh">Copy</button>
+            <button class="download-out" data-target="out-setup-sh" data-filename="setup.sh">Download</button>
+          </div>
+          <div class="code-wrap"><pre><code id="out-setup-sh"></code></pre></div>
+        </div>
+
+        <div class="output-pane" data-out="research-dockerfile">
+          <div class="output-actions">
+            <button class="copy-out" data-target="out-research-dockerfile">Copy</button>
+            <button class="download-out" data-target="out-research-dockerfile" data-filename="Dockerfile">Download</button>
+          </div>
+          <div class="code-wrap"><pre><code id="out-research-dockerfile"></code></pre></div>
+        </div>
+
+        <div class="output-pane" data-out="research-compose">
+          <div class="output-actions">
+            <button class="copy-out" data-target="out-research-compose">Copy</button>
+            <button class="download-out" data-target="out-research-compose" data-filename="docker-compose.research.yml">Download</button>
+          </div>
+          <div class="code-wrap"><pre><code id="out-research-compose"></code></pre></div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer class="app-footer container">
+  <span>Built from <code>~/vault/mcp/</code> — single self-contained HTML, Pico.css v2 from jsdelivr, vanilla JS.</span>
+  <span class="grow"></span>
+  <button class="reset secondary" id="resetBtn">Reset all state</button>
+</footer>
+
+<!-- ============================================================ -->
+<!-- SCRIPT                                                       -->
+<!-- ============================================================ -->
+<script>
+(() => {
+  'use strict';
+
+  // ---------- state ----------
+  const NS = 'mcp-guide:v1:';
+  const store = {
+    get(k, fallback = null) {
+      try {
+        const v = localStorage.getItem(NS + k);
+        return v === null ? fallback : JSON.parse(v);
+      } catch { return fallback; }
+    },
+    set(k, v) {
+      try { localStorage.setItem(NS + k, JSON.stringify(v)); } catch {}
+    },
+    clear() {
+      Object.keys(localStorage)
+        .filter(k => k.startsWith(NS))
+        .forEach(k => localStorage.removeItem(k));
+    }
+  };
+
+  // ---------- theme ----------
+  const picoLink = document.getElementById('picoCss');
+  const themeSelect = document.getElementById('themeSelect');
+  const modeToggle = document.getElementById('modeToggle');
+
+  function applyColorTheme(name) {
+    const base = 'https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/';
+    picoLink.href = name ? `${base}pico.${name}.min.css` : `${base}pico.min.css`;
+  }
+  function applyMode(mode) {
+    if (mode === 'auto') {
+      document.documentElement.removeAttribute('data-theme');
+    } else {
+      document.documentElement.setAttribute('data-theme', mode);
+    }
+  }
+
+  themeSelect.value = store.get('theme', '');
+  applyColorTheme(themeSelect.value);
+  themeSelect.addEventListener('change', () => {
+    store.set('theme', themeSelect.value);
+    applyColorTheme(themeSelect.value);
+  });
+
+  let mode = store.get('mode', 'dark');
+  applyMode(mode);
+  modeToggle.addEventListener('click', () => {
+    const order = ['light', 'dark', 'auto'];
+    mode = order[(order.indexOf(mode) + 1) % order.length];
+    store.set('mode', mode);
+    applyMode(mode);
+    modeToggle.textContent = mode === 'auto' ? '🌗' : (mode === 'light' ? '☀️' : '🌙');
+  });
+  modeToggle.textContent = mode === 'auto' ? '🌗' : (mode === 'light' ? '☀️' : '🌙');
+
+  // ---------- tabs ----------
+  const tabButtons = document.querySelectorAll('nav.tabs button[role="tab"]');
+  const panels = {
+    research:  document.getElementById('tab-research'),
+    install:   document.getElementById('tab-install'),
+    configure: document.getElementById('tab-configure'),
+  };
+
+  function activateTab(name) {
+    Object.entries(panels).forEach(([k, el]) => {
+      el.hidden = (k !== name);
+    });
+    tabButtons.forEach(b => {
+      b.setAttribute('aria-selected', b.dataset.tab === name ? 'true' : 'false');
+    });
+    store.set('activeTab', name);
+  }
+  tabButtons.forEach(b => b.addEventListener('click', () => activateTab(b.dataset.tab)));
+  activateTab(store.get('activeTab', 'research'));
+
+  // jump-to-tab links
+  document.querySelectorAll('[data-jump]').forEach(a => {
+    a.addEventListener('click', e => {
+      e.preventDefault();
+      activateTab(a.dataset.jump);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+  });
+
+  // ---------- copy buttons on every <pre> ----------
+  document.querySelectorAll('.code-wrap').forEach(wrap => {
+    if (wrap.querySelector('button.copy')) return;
+    const btn = document.createElement('button');
+    btn.type = 'button'; btn.className = 'copy'; btn.textContent = 'Copy';
+    wrap.appendChild(btn);
+    btn.addEventListener('click', async () => {
+      const pre = wrap.querySelector('pre');
+      const text = pre ? pre.innerText : '';
+      try {
+        await navigator.clipboard.writeText(text);
+        btn.textContent = 'Copied!';
+        btn.classList.add('copied');
+        setTimeout(() => { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 1200);
+      } catch {
+        btn.textContent = 'Failed';
+        setTimeout(() => { btn.textContent = 'Copy'; }, 1200);
+      }
+    });
+  });
+
+  // ---------- search filter (research tab) ----------
+  const searchBox = document.getElementById('searchBox');
+  searchBox.addEventListener('input', () => {
+    const q = searchBox.value.trim().toLowerCase();
+    document.querySelectorAll('#tab-research details.research-card').forEach(d => {
+      if (!q) { d.classList.remove('filtered-out'); return; }
+      const hit = d.textContent.toLowerCase().includes(q);
+      d.classList.toggle('filtered-out', !hit);
+      if (hit) d.open = true;
+    });
+    if (q) activateTab('research');
+  });
+
+  // ---------- install checklist ----------
+  // Step definitions. group: A/B/C/D/E. show: optional fn(form) => bool
+  const STEPS = [
+    { id: 'orbstack', group: 'A. Host setup',
+      title: 'Install OrbStack',
+      rationale: 'Recommended Docker runtime on macOS — VirtioFS bind mounts, drop-in `docker` CLI. Open at Login from preferences. Docker Desktop and Podman also work.',
+      cmd: '# https://orbstack.dev — install the app, then enable "Open at Login"' },
+    { id: 'install-host', group: 'A. Host setup',
+      title: 'Run scripts/install-host.sh',
+      rationale: 'One-time host setup: generates SSH key, writes ~/.ssh/config entry, scaffolds base/.env.',
+      cmd: 'cd ~/vault/mcp/dockerize\nscripts/install-host.sh' },
+    { id: 'fill-env', group: 'A. Host setup',
+      title: 'Fill in base/.env',
+      rationale: 'Set DOTFILES_REPO, DEVBOX_HOST_CODE_DIR, DEVBOX_HOST_VAULT_DIR, DEVBOX_HOST_SSH_PUBKEY. Generate one in the Configure tab.',
+      cmd: 'cp base/.env.example base/.env\n$EDITOR base/.env' },
+    { id: 'op-setup', group: 'A. Host setup',
+      title: '(Optional) 1Password CLI for runtime secrets',
+      rationale: 'Avoid plaintext API keys: `op run --env-file=… -- claude` injects them just for the process.',
+      cmd: 'brew install --cask 1password-cli\nop signin' },
+
+    { id: 'build',  group: 'B. Build & start',
+      title: 'Build the base image',
+      rationale: 'Multi-stage build with BuildKit cache. First run ~5–10 min; rebuilds are usually <30 s.',
+      cmd: 'devbox build' },
+    { id: 'start',  group: 'B. Build & start',
+      title: 'Start the container',
+      rationale: 'docker compose up -d. restart: unless-stopped means it survives Mac reboots.',
+      cmd: 'devbox start' },
+    { id: 'ssh',    group: 'B. Build & start',
+      title: 'SSH in as `dev`',
+      rationale: 'Uses the key in ~/.ssh/config that install-host.sh wired up. Or `devbox shell` to bypass SSH.',
+      cmd: 'devbox ssh' },
+
+    { id: 'swift-sidecar', group: 'B. Build & start',
+      title: '(Optional) Build & start Swift sidecar',
+      rationale: 'Only needed for Swift SPM projects (e.g. AEON/main). Builds Dockerfile.swift on top of devbox-base.',
+      cmd: 'docker compose --profile swift build\ndocker compose --profile swift up -d',
+      show: f => true },
+
+    { id: 'tmux-init', group: 'C. First-run inside container',
+      title: 'Initialize tmux plugins',
+      rationale: 'tpm is cloned at build, but plugins install on first manual prefix-I. After that continuum autosaves every 15 min.',
+      cmd: 'tmux\n# then press: Ctrl-a + I  (capital i)' },
+    { id: 'agent-auth', group: 'C. First-run inside container',
+      title: 'Auth each AI agent',
+      rationale: 'Run each one once interactively. Configs land in ~/.config/... which is on the devbox-config named volume.',
+      cmd: 'claude    # log in\ncodex     # log in\ngemini    # log in' },
+    { id: 'verify-docker', group: 'C. First-run inside container',
+      title: 'Verify docker socket',
+      rationale: 'Container CLI talks to the host daemon via the mounted /var/run/docker.sock. `docker ps` should succeed.',
+      cmd: 'docker ps' },
+
+    { id: 'adb-host', group: 'D. MCP wiring',
+      title: 'Android — start ADB server on Mac host',
+      rationale: 'mobile-mcp inside the container will use ADB_SERVER_SOCKET to reach the host emulator.',
+      cmd: 'adb start-server',
+      show: f => f.mcpAndroid },
+    { id: 'adb-env', group: 'D. MCP wiring',
+      title: 'Android — set ADB_SERVER_SOCKET in container',
+      rationale: 'Add to ~/.zshrc or compose environment so adb in the container talks to the host server.',
+      cmd: 'export ADB_SERVER_SOCKET=tcp:host.docker.internal:5037',
+      show: f => f.mcpAndroid },
+    { id: 'ios-sse', group: 'D. MCP wiring',
+      title: 'iOS — run mobile-mcp on Mac host (SSE)',
+      rationale: 'xcrun simctl is macOS-only. Run mobile-mcp directly on the Mac and expose over SSE.',
+      cmd: '# on the Mac, not in the container:\nnpx -y @mobilenext/mobile-mcp --sse --port 8080',
+      show: f => f.mcpIos },
+    { id: 'mcp-config', group: 'D. MCP wiring',
+      title: 'Add MCP entry to editor config',
+      rationale: 'Paste the generated block into Cursor (~/.cursor/mcp.json) or Claude Code (.mcp.json at project root).',
+      cmd: '# Copy block from Configure tab → MCP config' },
+
+    { id: 'overlay-copy', group: 'E. Per-project (optional)',
+      title: 'Copy overlay into project',
+      rationale: 'overlays/example-project/.devcontainer/ extends devbox-base and adds language toolchain + extensions.',
+      cmd: 'cp -r ~/vault/mcp/dockerize/overlays/example-project/.devcontainer ./' },
+    { id: 'cursor-reopen', group: 'E. Per-project (optional)',
+      title: 'Cursor: Reopen in Container',
+      rationale: 'Cursor builds the project image, installs declared extensions inside it, mounts the workspace.',
+      cmd: '# Cmd+Shift+P → Dev Containers: Reopen in Container' },
+  ];
+
+  function readForm() {
+    const f = document.getElementById('configForm');
+    if (!f) return {};
+    const fd = new FormData(f);
+    const obj = {};
+    for (const [k, v] of fd) obj[k] = v;
+    // checkbox + radio fixups
+    ['mcpAndroid', 'mcpIos', 'mcpFlutter', 'mcpExpo'].forEach(k => {
+      obj[k] = !!f.elements[k]?.checked;
+    });
+    return obj;
+  }
+
+  function renderSteps() {
+    const form = readForm();
+    const list = document.getElementById('stepsList');
+    list.innerHTML = '';
+    let lastGroup = null;
+    let visibleSteps = STEPS.filter(s => !s.show || s.show(form));
+    visibleSteps.forEach(s => {
+      if (s.group !== lastGroup) {
+        const h = document.createElement('li');
+        h.style.listStyle = 'none';
+        h.style.gridTemplateColumns = '1fr';
+        h.style.border = 'none';
+        h.style.background = 'transparent';
+        h.style.padding = '0';
+        h.style.margin = '1.2rem 0 0';
+        h.innerHTML = `<h4 class="group-heading" style="margin:0;">${s.group}</h4>`;
+        list.appendChild(h);
+        lastGroup = s.group;
+      }
+      const li = document.createElement('li');
+      const done = store.get('step:' + s.id, false);
+      if (done) li.classList.add('done');
+      li.innerHTML = `
+        <input type="checkbox" data-step="${s.id}" ${done ? 'checked' : ''} aria-label="Mark step done" />
+        <div class="step-body">
+          <h4>${escapeHtml(s.title)}</h4>
+          <p class="rationale">${escapeHtml(s.rationale)}</p>
+          <div class="code-wrap"><pre><code>${escapeHtml(s.cmd)}</code></pre></div>
+        </div>
+      `;
+      list.appendChild(li);
+    });
+    // attach copy buttons to new code blocks
+    list.querySelectorAll('.code-wrap').forEach(wrap => {
+      if (wrap.querySelector('button.copy')) return;
+      const btn = document.createElement('button');
+      btn.type = 'button'; btn.className = 'copy'; btn.textContent = 'Copy';
+      wrap.appendChild(btn);
+      btn.addEventListener('click', async () => {
+        const pre = wrap.querySelector('pre');
+        try {
+          await navigator.clipboard.writeText(pre.innerText);
+          btn.textContent = 'Copied!'; btn.classList.add('copied');
+          setTimeout(() => { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 1200);
+        } catch {}
+      });
+    });
+    list.querySelectorAll('input[type="checkbox"][data-step]').forEach(cb => {
+      cb.addEventListener('change', () => {
+        store.set('step:' + cb.dataset.step, cb.checked);
+        cb.closest('li').classList.toggle('done', cb.checked);
+        updateProgress();
+      });
+    });
+    updateProgress(visibleSteps);
+  }
+
+  function updateProgress(visibleSteps) {
+    const steps = visibleSteps || STEPS.filter(s => !s.show || s.show(readForm()));
+    const done = steps.filter(s => store.get('step:' + s.id, false)).length;
+    const total = steps.length;
+    const p = document.getElementById('installProgress');
+    const c = document.getElementById('installCount');
+    p.max = total; p.value = done;
+    c.textContent = `${done} / ${total}`;
+  }
+
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, ch => ({
+      '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+    }[ch]));
+  }
+
+  // ---------- configure: load saved form values ----------
+  const form = document.getElementById('configForm');
+  function loadFormState() {
+    const saved = store.get('form', null);
+    if (!saved) return;
+    Object.entries(saved).forEach(([name, val]) => {
+      const el = form.elements[name];
+      if (!el) return;
+      if (el instanceof RadioNodeList || el.type === 'radio') {
+        form.querySelectorAll(`[name="${name}"]`).forEach(r => {
+          if (r.value === val) r.checked = true;
+        });
+      } else if (el.type === 'checkbox') {
+        el.checked = !!val;
+      } else {
+        el.value = val;
+      }
+    });
+  }
+  function saveFormState() {
+    const data = readForm();
+    store.set('form', data);
+  }
+
+  // ---------- generators ----------
+  function gen() {
+    const f = readForm();
+
+    // toggle env/op fields
+    document.getElementById('envFields').hidden = (f.secretsMode !== 'env');
+    document.getElementById('opFields').hidden = (f.secretsMode !== 'op');
+
+    set('out-env', renderEnv(f));
+    set('out-compose', renderCompose(f));
+    set('out-devcontainer', renderDevcontainer(f));
+    const mcp = renderMcp(f);
+    set('out-mcp', mcp.body);
+    const hintEl = document.getElementById('out-mcp-hint');
+    if (hintEl) hintEl.textContent = mcp.hint;
+    set('out-setup-sh', renderSetupSh(f));
+    set('out-research-dockerfile', renderResearchDockerfile(f));
+    set('out-research-compose', renderResearchCompose(f));
+
+    saveFormState();
+    renderSteps();
+  }
+  function set(id, txt) {
+    const el = document.getElementById(id);
+    if (el) el.textContent = txt;
+  }
+
+  function renderEnv(f) {
+    const useOp = f.secretsMode === 'op';
+    const lines = [
+      `# Generated by guide.html — ${new Date().toISOString().slice(0,10)}`,
+      `# Goes in: dockerize/base/.env`,
+      ``,
+      `# Where to clone your dotfiles on first boot`,
+      `DOTFILES_REPO=${f.dotfilesRepo || ''}`,
+      ``,
+      `# Your project tree on the Mac, bind-mounted into /home/${f.devUser || 'dev'}/code`,
+      `DEVBOX_HOST_CODE_DIR=${f.codeDir || ''}`,
+      ``,
+      `# Public key that authorizes \`devbox ssh\``,
+      `DEVBOX_HOST_SSH_PUBKEY=${f.sshPubkey || ''}`,
+      ``,
+      `# Your vault tree on the Mac, bind-mounted into /home/${f.devUser || 'dev'}/vault`,
+      `DEVBOX_HOST_VAULT_DIR=${f.vaultDir || '~/vault'}`,
+      ``,
+    ];
+    if (f.sshPort && f.sshPort !== '2222') {
+      lines.push(`# Override default 2222 host-side SSH port`,
+                 `DEVBOX_HOST_SSH_PORT=${f.sshPort}`, ``);
+    }
+    if (useOp) {
+      lines.push(`# Secrets via 1Password CLI — keys are NOT in this file.`,
+                 `# Wrap agent calls:  op run --env-file=~/.config/op/<agent>.env -- <agent>`,
+                 `# Example claude.env contents:`,
+                 `#   ANTHROPIC_API_KEY=op://${f.opVault || 'Personal'}/Anthropic/api_key`);
+    } else {
+      lines.push(`# AI agent keys (plaintext — consider 1Password mode instead)`,
+                 `ANTHROPIC_API_KEY=${f.anthropicKey || ''}`,
+                 `OPENAI_API_KEY=${f.openaiKey || ''}`,
+                 `GEMINI_API_KEY=${f.geminiKey || ''}`);
+    }
+    return lines.join('\n') + '\n';
+  }
+
+  function renderCompose(f) {
+    const port = f.sshPort || '2222';
+    const user = f.devUser || 'dev';
+    const envBlock = (f.secretsMode === 'op')
+      ? [
+          `      # Secrets injected at runtime via \`op run\` — do not hard-code.`,
+          `      DEV_USER: ${user}`,
+          `      DOTFILES_REPO: \${DOTFILES_REPO:-}`,
+        ]
+      : [
+          `      DEV_USER: ${user}`,
+          `      DOTFILES_REPO: \${DOTFILES_REPO:-}`,
+          `      ANTHROPIC_API_KEY: \${ANTHROPIC_API_KEY:-}`,
+          `      OPENAI_API_KEY: \${OPENAI_API_KEY:-}`,
+          `      GEMINI_API_KEY: \${GEMINI_API_KEY:-}`,
+        ];
+    if (f.mcpAndroid) {
+      envBlock.push(`      # MCP — Android: point in-container adb at the host's adb server`);
+      envBlock.push(`      ADB_SERVER_SOCKET: tcp:host.docker.internal:5037`);
+    }
+    if (f.mcpIos) {
+      envBlock.push(`      # MCP — iOS: SSE endpoint where mobile-mcp runs on the Mac host`);
+      envBlock.push(`      MOBILE_MCP_SSE_URL: ${f.iosSseUrl || 'http://host.docker.internal:8080/mcp'}`);
+    }
+
+    return [
+      `# Generated by guide.html`,
+      `# Goes in: dockerize/base/docker-compose.yml`,
+      ``,
+      `services:`,
+      `  devbox:`,
+      `    build:`,
+      `      context: .`,
+      `      dockerfile: Dockerfile`,
+      `      cache_from:`,
+      `        - devbox-base:latest`,
+      `    image: devbox-base:latest`,
+      `    container_name: devbox`,
+      `    hostname: devbox`,
+      `    restart: unless-stopped`,
+      `    init: true`,
+      ``,
+      `    ports:`,
+      `      - "127.0.0.1:${port}:22"   # SSH on loopback only`,
+      ``,
+      `    environment:`,
+      ...envBlock,
+      ``,
+      `    volumes:`,
+      `      - "\${DEVBOX_HOST_CODE_DIR:-~/code}:/home/${user}/code"`,
+      `      - "\${DEVBOX_HOST_VAULT_DIR:-~/vault}:/home/${user}/vault"`,
+      `      - /var/run/docker.sock:/var/run/docker.sock`,
+      `      - "\${DEVBOX_HOST_SSH_PUBKEY:-~/.ssh/devbox_ed25519.pub}:/home/${user}/.ssh/authorized_keys:ro"`,
+      `      - devbox-home:/home/${user}`,
+      `      - devbox-cache:/home/${user}/.cache`,
+      `      - devbox-tools:/home/${user}/.local`,
+      `      - devbox-config:/home/${user}/.config`,
+      `      - devbox-gradle:/home/${user}/.gradle`,
+      `      - devbox-android-avd:/home/${user}/.android`,
+      ``,
+      `  # Swift sidecar — only starts with: docker compose --profile swift up`,
+      `  devbox-swift:`,
+      `    profiles: ["swift"]`,
+      `    build:`,
+      `      context: .`,
+      `      dockerfile: Dockerfile.swift`,
+      `      cache_from:`,
+      `        - devbox-swift:latest`,
+      `    image: devbox-swift:latest`,
+      `    container_name: devbox-swift`,
+      `    hostname: devbox-swift`,
+      `    restart: unless-stopped`,
+      `    init: true`,
+      `    ports:`,
+      `      - "127.0.0.1:2223:22"`,
+      `    environment:`,
+      `      DEV_USER: ${user}`,
+      `      DOTFILES_REPO: \${DOTFILES_REPO:-}`,
+      `      ANTHROPIC_API_KEY: \${ANTHROPIC_API_KEY:-}`,
+      `    volumes:`,
+      `      - "\${DEVBOX_HOST_VAULT_DIR:-~/vault}:/home/${user}/vault"`,
+      `      - /var/run/docker.sock:/var/run/docker.sock`,
+      `      - "\${DEVBOX_HOST_SSH_PUBKEY:-~/.ssh/devbox_ed25519.pub}:/home/${user}/.ssh/authorized_keys:ro"`,
+      `      - devbox-swift-home:/home/${user}`,
+      ``,
+      `volumes:`,
+      `  devbox-home:`,
+      `  devbox-cache:`,
+      `  devbox-tools:`,
+      `  devbox-config:`,
+      `  devbox-gradle:`,
+      `  devbox-android-avd:`,
+      `  devbox-swift-home:`,
+      ``,
+    ].join('\n');
+  }
+
+  function renderDevcontainer(f) {
+    const name = f.projectName || 'example-project';
+    const user = f.devUser || 'dev';
+    const lang = f.overlayLang || 'node';
+    const exts = (f.extensions || '')
+      .split(',').map(s => s.trim()).filter(Boolean);
+    const extraApt = (f.extraApt || '').trim();
+    const postCmds = {
+      node:   'mise install && npm install || true',
+      python: 'mise install && uv sync || true',
+      rust:   'cargo fetch || true',
+      go:     'mise install && go mod download || true',
+    };
+    let post = postCmds[lang] || 'true';
+    if (extraApt) {
+      post = `sudo apt-get update && sudo apt-get install -y --no-install-recommends ${extraApt} && ${post}`;
+    }
+    const json = {
+      name,
+      build: { dockerfile: 'Dockerfile', context: '..' },
+      remoteUser: user,
+      containerUser: user,
+      updateRemoteUserUID: true,
+      workspaceFolder: `/home/${user}/code/${name}`,
+      workspaceMount: `source=\${localWorkspaceFolder},target=/home/${user}/code/${name},type=bind,consistency=cached`,
+      mounts: [
+        `source=devbox-cache,target=/home/${user}/.cache,type=volume`,
+        `source=devbox-tools,target=/home/${user}/.local,type=volume`,
+        `source=/var/run/docker.sock,target=/var/run/docker.sock,type=bind`,
+      ],
+      forwardPorts: [],
+      postCreateCommand: post,
+      customizations: {
+        vscode: {
+          extensions: exts.length ? exts : ['esbenp.prettier-vscode'],
+          settings: {
+            'terminal.integrated.defaultProfile.linux': 'zsh',
+          },
+        },
+      },
+    };
+    return JSON.stringify(json, null, 2) + '\n';
+  }
+
+  function renderMcp(f) {
+    const target = f.mcpTarget || 'cursor';
+    const servers = {};
+    if (f.mcpAndroid) {
+      servers['mobile-android'] = {
+        command: 'npx',
+        args: ['-y', '@mobilenext/mobile-mcp'],
+        env: { ADB_SERVER_SOCKET: 'tcp:host.docker.internal:5037' },
+      };
+    }
+    if (f.mcpIos) {
+      servers['mobile-ios'] = {
+        type: 'sse',
+        url: f.iosSseUrl || 'http://host.docker.internal:8080/mcp',
+      };
+    }
+    if (f.mcpFlutter) {
+      servers['marionette'] = {
+        command: 'npx',
+        args: ['-y', 'marionette-mcp'],
+      };
+    }
+    if (f.mcpExpo) {
+      servers['expo'] = {
+        command: 'npx',
+        args: ['-y', '@expo/mcp-server'],
+      };
+    }
+    if (Object.keys(servers).length === 0) {
+      return {
+        body: '{\n  "mcpServers": {}\n}\n',
+        hint: 'Tick at least one MCP platform on the left to populate this config.',
+      };
+    }
+    // Both Cursor and Claude Code use the same `mcpServers` wrapper key.
+    const body = JSON.stringify({ mcpServers: servers }, null, 2) + '\n';
+    const hint = target === 'claude-code'
+      ? 'Save to .mcp.json at your project root (or ~/.claude/mcp.json globally).'
+      : "Save to ~/.cursor/mcp.json (or project's .cursor/mcp.json).";
+    return { body, hint };
+  }
+
+  function renderResearchDockerfile(f) {
+    const py = f.pyVersion || '3.11';
+    const vol = f.dataVolume || '/app/data';
+    const cmd = (f.masterCmd || 'python master.py').split(/\s+/);
+    return [
+      `# Generated by guide.html — research-system multi-stage Dockerfile`,
+      ``,
+      `# --- Stage 1: Builder ---`,
+      `FROM python:${py}-slim as builder`,
+      ``,
+      `WORKDIR /app`,
+      ``,
+      `ENV PYTHONDONTWRITEBYTECODE=1`,
+      `ENV PYTHONUNBUFFERED=1`,
+      ``,
+      `RUN apt-get update && apt-get install -y --no-install-recommends gcc python3-dev`,
+      ``,
+      `COPY research_system/requirements.txt .`,
+      `RUN pip install --user --no-cache-dir -r requirements.txt`,
+      ``,
+      `# --- Stage 2: Runner ---`,
+      `FROM python:${py}-slim as runner`,
+      ``,
+      `WORKDIR /app`,
+      ``,
+      `COPY --from=builder /root/.local /root/.local`,
+      `COPY research_system/ .`,
+      ``,
+      `ENV PATH=/root/.local/bin:$PATH`,
+      ``,
+      `VOLUME ["${vol}"]`,
+      ``,
+      `CMD ${JSON.stringify(cmd)}`,
+      ``,
+    ].join('\n');
+  }
+
+  function renderResearchCompose(f) {
+    const vol = f.dataVolume || '/app/data';
+    const n = Math.max(0, Math.min(8, parseInt(f.numAgents, 10) || 0));
+    const lines = [
+      `# Generated by guide.html — research-system compose`,
+      ``,
+      `services:`,
+      `  master:`,
+      `    build: .`,
+      `    image: research-system:latest`,
+      `    container_name: research_master`,
+      `    volumes:`,
+      `      - ./research_data:${vol}`,
+      `    env_file:`,
+      `      - .g_env`,
+      `    restart: always`,
+    ];
+    for (let i = 1; i <= n; i++) {
+      lines.push(``,
+        `  agent-${i}:`,
+        `    image: research-system:latest`,
+        `    container_name: research_agent_${i}`,
+        `    command: python agent.py ${i}`,
+        `    volumes:`,
+        `      - ./research_data:${vol}`,
+        `    env_file:`,
+        `      - .g_env`,
+        `    depends_on:`,
+        `      - master`);
+    }
+    return lines.join('\n') + '\n';
+  }
+
+  // ---------- setup.sh generator ----------
+  function renderSetupSh(f) {
+    const user = f.devUser || 'dev';
+    const port = f.sshPort || '2222';
+    const codeDir = f.codeDir || '~/code';
+    const vaultDir = f.vaultDir || '~/vault';
+    const pubkey = f.sshPubkey || '~/.ssh/devbox_ed25519.pub';
+    const dotfiles = f.dotfilesRepo || '';
+    const mcpAndroid = f.mcpAndroid ? 'true' : 'false';
+    const mcpIos = f.mcpIos ? 'true' : 'false';
+    const secretsOp = f.secretsMode === 'op' ? 'true' : 'false';
+    const iso = new Date().toISOString();
+
+    return [
+      `#!/usr/bin/env bash`,
+      `# setup.sh — generated by devbox guide.html on ${iso}`,
+      `# Dry-run by default. Pass --run to execute changes.`,
+      `# Run all steps:      ./setup.sh --run`,
+      `# Run a single step:  ./setup.sh step_build --run`,
+      `# List steps:         ./setup.sh --list`,
+      `set -euo pipefail`,
+      ``,
+      `# ── Embedded config (from guide.html form) ──────────────────────────`,
+      `DEVBOX_CODE_DIR="${escapeShellDQ(codeDir)}"`,
+      `DEVBOX_VAULT_DIR="${escapeShellDQ(vaultDir)}"`,
+      `DEVBOX_SSH_PUBKEY="${escapeShellDQ(pubkey)}"`,
+      `DEVBOX_SSH_PORT="${port}"`,
+      `DEVBOX_DOTFILES_REPO="${escapeShellDQ(dotfiles)}"`,
+      `DEVBOX_DEV_USER="${user}"`,
+      `DEVBOX_MCP_ANDROID="${mcpAndroid}"`,
+      `DEVBOX_MCP_IOS="${mcpIos}"`,
+      `DEVBOX_SECRETS_OP="${secretsOp}"`,
+      `DEVBOX_GUIDE_GENERATED="${iso}"`,
+      `# ──────────────────────────────────────────────────────────────────────`,
+      ``,
+      `HERE="$( cd "$( dirname "\${BASH_SOURCE[0]}" )" && pwd )"`,
+      `REPO_ROOT="$( cd "$HERE/.." 2>/dev/null && pwd || echo "$HERE" )"`,
+      `BASE_DIR="$REPO_ROOT/base"`,
+      `STATE_FILE="$REPO_ROOT/.devbox-setup-state.json"`,
+      `DRY_RUN=true`,
+      ``,
+      `# ── Output helpers ──────────────────────────────────────────────────`,
+      `say()      { printf '\\033[1;36m==>\\033[0m %s\\n' "$*"; }`,
+      `warn()     { printf '\\033[1;33m!! %s\\033[0m\\n' "$*" >&2; }`,
+      `done_msg() { printf '\\033[1;32m    done: %s\\033[0m\\n' "$*"; }`,
+      `dry()      { printf '\\033[2m    dry-run: %s\\033[0m\\n' "$*"; }`,
+      ``,
+      `run() {`,
+      `  if $DRY_RUN; then`,
+      `    dry "$1"`,
+      `  else`,
+      `    eval "$1"`,
+      `  fi`,
+      `}`,
+      ``,
+      `# ── State tracking ─────────────────────────────────────────────────`,
+      `declare -A STEP_STATE`,
+      ``,
+      `write_state() {`,
+      `  local ts; ts="$(date -u +%Y-%m-%dT%H:%M:%SZ)"`,
+      `  {`,
+      `    printf '{\\n  "generated": "%s",\\n  "steps": {\\n' "$ts"`,
+      `    local first=true`,
+      `    for key in "\${!STEP_STATE[@]}"; do`,
+      `      $first || printf ',\\n'; first=false`,
+      `      printf '    "%s": %s' "$key" "\${STEP_STATE[$key]}"`,
+      `    done`,
+      `    printf '\\n  },\\n  "detected": {\\n'`,
+      `    printf '    "codeDir": "%s",\\n' "$DEVBOX_CODE_DIR"`,
+      `    printf '    "vaultDir": "%s",\\n' "$DEVBOX_VAULT_DIR"`,
+      `    printf '    "sshPubkey": "%s",\\n' "$DEVBOX_SSH_PUBKEY"`,
+      `    printf '    "sshPort": "%s"\\n' "$DEVBOX_SSH_PORT"`,
+      `    printf '  }\\n}\\n'`,
+      `  } > "$STATE_FILE"`,
+      `  say "State written to: $STATE_FILE"`,
+      `  say "Import it in the guide (Install tab → Sync from script) to update the checklist."`,
+      `}`,
+      ``,
+      `# ── Auto-detection helpers ─────────────────────────────────────────`,
+      `detect_runtime() {`,
+      `  if command -v orb >/dev/null 2>&1; then`,
+      `    done_msg "OrbStack found"`,
+      `    return 0`,
+      `  elif docker info >/dev/null 2>&1; then`,
+      `    done_msg "Docker runtime found"`,
+      `    return 0`,
+      `  else`,
+      `    warn "No container runtime found."`,
+      `    warn "Install OrbStack: https://orbstack.dev  or: brew install orbstack"`,
+      `    return 1`,
+      `  fi`,
+      `}`,
+      ``,
+      `detect_ssh_key() {`,
+      `  local key="$HOME/.ssh/devbox_ed25519"`,
+      `  if [ -f "$key" ]; then`,
+      `    done_msg "SSH key exists: $key"`,
+      `    DEVBOX_SSH_PUBKEY="\${key}.pub"`,
+      `    return 0`,
+      `  fi`,
+      `  return 1`,
+      `}`,
+      ``,
+      `# ── Step functions ────────────────────────────────────────────────`,
+      ``,
+      `step_orbstack() {`,
+      `  say "Step: Install OrbStack"`,
+      `  if detect_runtime; then`,
+      `    STEP_STATE["orbstack"]=true`,
+      `  else`,
+      `    STEP_STATE["orbstack"]=false`,
+      `    run "brew install orbstack"`,
+      `  fi`,
+      `}`,
+      ``,
+      `step_install_host() {`,
+      `  say "Step: Run scripts/install-host.sh"`,
+      `  if [ -f "$REPO_ROOT/scripts/install-host.sh" ]; then`,
+      `    run "bash $REPO_ROOT/scripts/install-host.sh"`,
+      `    STEP_STATE["install-host"]=true`,
+      `  else`,
+      `    warn "scripts/install-host.sh not found at $REPO_ROOT/scripts/"`,
+      `    STEP_STATE["install-host"]=false`,
+      `  fi`,
+      `}`,
+      ``,
+      `step_fill_env() {`,
+      `  say "Step: Fill in base/.env"`,
+      `  if [ -f "$BASE_DIR/.env" ]; then`,
+      `    done_msg ".env already exists at $BASE_DIR/.env"`,
+      `    STEP_STATE["fill-env"]=true`,
+      `  elif [ -f "$BASE_DIR/.env.example" ]; then`,
+      `    run "cp $BASE_DIR/.env.example $BASE_DIR/.env"`,
+      `    say "  Edit $BASE_DIR/.env to set DOTFILES_REPO, DEVBOX_HOST_CODE_DIR, DEVBOX_HOST_VAULT_DIR"`,
+      `    STEP_STATE["fill-env"]=true`,
+      `  else`,
+      `    warn ".env.example not found at $BASE_DIR/"`,
+      `    STEP_STATE["fill-env"]=false`,
+      `  fi`,
+      `}`,
+      ``,
+      `step_op_setup() {`,
+      `  say "Step: (Optional) 1Password CLI for runtime secrets"`,
+      `  if command -v op >/dev/null 2>&1; then`,
+      `    done_msg "1Password CLI found"`,
+      `    STEP_STATE["op-setup"]=true`,
+      `  else`,
+      `    say "  1Password CLI not installed. Install with: brew install --cask 1password-cli"`,
+      `    STEP_STATE["op-setup"]=false`,
+      `  fi`,
+      `}`,
+      ``,
+      `step_build() {`,
+      `  say "Step: Build the base image"`,
+      `  if [ -f "$BASE_DIR/Dockerfile" ]; then`,
+      `    run "cd $BASE_DIR && DOCKER_BUILDKIT=1 docker compose build"`,
+      `    STEP_STATE["build"]=true`,
+      `  else`,
+      `    warn "Dockerfile not found at $BASE_DIR/"`,
+      `    STEP_STATE["build"]=false`,
+      `  fi`,
+      `}`,
+      ``,
+      `step_start() {`,
+      `  say "Step: Start the container"`,
+      `  run "cd $BASE_DIR && docker compose up -d"`,
+      `  STEP_STATE["start"]=true`,
+      `}`,
+      ``,
+      `step_ssh() {`,
+      `  say "Step: SSH in as dev"`,
+      `  if detect_ssh_key; then`,
+      `    say "  Connect with: ssh -p $DEVBOX_SSH_PORT dev@127.0.0.1"`,
+      `    STEP_STATE["ssh"]=true`,
+      `  else`,
+      `    warn "SSH key not found. Run install-host.sh first."`,
+      `    STEP_STATE["ssh"]=false`,
+      `  fi`,
+      `}`,
+      ``,
+      `step_swift_sidecar() {`,
+      `  say "Step: (Optional) Build & start Swift sidecar"`,
+      `  if [ -f "$BASE_DIR/Dockerfile.swift" ]; then`,
+      `    run "cd $BASE_DIR && docker compose --profile swift build"`,
+      `    run "cd $BASE_DIR && docker compose --profile swift up -d"`,
+      `    STEP_STATE["swift-sidecar"]=true`,
+      `  else`,
+      `    warn "Dockerfile.swift not found at $BASE_DIR/"`,
+      `    STEP_STATE["swift-sidecar"]=false`,
+      `  fi`,
+      `}`,
+      ``,
+      `step_tmux_init() {`,
+      `  say "Step: Initialize tmux plugins"`,
+      `  say "  Inside the container, run: tmux"`,
+      `  say "  Then press: Ctrl-a + I  (capital i)"`,
+      `  STEP_STATE["tmux-init"]=true`,
+      `}`,
+      ``,
+      `step_agent_auth() {`,
+      `  say "Step: Auth each AI agent"`,
+      `  say "  Inside the container, run each once:"`,
+      `  say "    claude    # log in"`,
+      `  say "    codex     # log in"`,
+      `  say "    gemini    # log in"`,
+      `  STEP_STATE["agent-auth"]=true`,
+      `}`,
+      ``,
+      `step_verify_docker() {`,
+      `  say "Step: Verify docker socket"`,
+      `  run "docker ps"`,
+      `  STEP_STATE["verify-docker"]=true`,
+      `}`,
+      ``,
+      `step_adb_host() {`,
+      `  say "Step: Android — start ADB server on Mac host"`,
+      `  if command -v adb >/dev/null 2>&1; then`,
+      `    run "adb start-server"`,
+      `    STEP_STATE["adb-host"]=true`,
+      `  else`,
+      `    warn "adb not found. Install Android platform-tools."`,
+      `    STEP_STATE["adb-host"]=false`,
+      `  fi`,
+      `}`,
+      ``,
+      `step_adb_env() {`,
+      `  say "Step: Android — set ADB_SERVER_SOCKET in container"`,
+      `  say '  Add to ~/.zshrc inside the container:'`,
+      `  say '    export ADB_SERVER_SOCKET=tcp:host.docker.internal:5037'`,
+      `  STEP_STATE["adb-env"]=true`,
+      `}`,
+      ``,
+      `step_ios_sse() {`,
+      `  say "Step: iOS — run mobile-mcp on Mac host (SSE)"`,
+      `  say "  On the Mac (not in the container):"`,
+      `  say "    npx -y @mobilenext/mobile-mcp --sse --port 8080"`,
+      `  STEP_STATE["ios-sse"]=true`,
+      `}`,
+      ``,
+      `step_mcp_config() {`,
+      `  say "Step: Add MCP entry to editor config"`,
+      `  say "  Paste the generated block from the Configure tab into your editor's MCP config."`,
+      `  STEP_STATE["mcp-config"]=true`,
+      `}`,
+      ``,
+      `step_overlay_copy() {`,
+      `  say "Step: Copy overlay into project"`,
+      `  if [ -d "$REPO_ROOT/overlays/example-project/.devcontainer" ]; then`,
+      `    say "  Template available at: $REPO_ROOT/overlays/example-project/.devcontainer/"`,
+      `    say "  Copy with: cp -r $REPO_ROOT/overlays/example-project/.devcontainer ./"`,
+      `    STEP_STATE["overlay-copy"]=true`,
+      `  else`,
+      `    warn "Overlay template not found at $REPO_ROOT/overlays/"`,
+      `    STEP_STATE["overlay-copy"]=false`,
+      `  fi`,
+      `}`,
+      ``,
+      `step_cursor_reopen() {`,
+      `  say "Step: Cursor — Reopen in Container"`,
+      `  say "  Cmd+Shift+P → Dev Containers: Reopen in Container"`,
+      `  STEP_STATE["cursor-reopen"]=true`,
+      `}`,
+      ``,
+      `# ── Dispatcher ────────────────────────────────────────────────────`,
+      ``,
+      `all_steps() {`,
+      `  step_orbstack`,
+      `  step_install_host`,
+      `  step_fill_env`,
+      `  step_op_setup`,
+      `  step_build`,
+      `  step_start`,
+      `  step_ssh`,
+      `  step_swift_sidecar`,
+      `  step_tmux_init`,
+      `  step_agent_auth`,
+      `  step_verify_docker`,
+      `  [[ "$DEVBOX_MCP_ANDROID" == "true" ]] && step_adb_host || true`,
+      `  [[ "$DEVBOX_MCP_ANDROID" == "true" ]] && step_adb_env || true`,
+      `  [[ "$DEVBOX_MCP_IOS" == "true" ]] && step_ios_sse || true`,
+      `  step_mcp_config`,
+      `  step_overlay_copy`,
+      `  step_cursor_reopen`,
+      `}`,
+      ``,
+      `main() {`,
+      `  local target="all"`,
+      `  local positional=()`,
+      ``,
+      `  for arg in "$@"; do`,
+      `    case "$arg" in`,
+      `      --run)              DRY_RUN=false ;;`,
+      `      --code-dir=*)       DEVBOX_CODE_DIR="\${arg#--code-dir=}" ;;`,
+      `      --vault-dir=*)      DEVBOX_VAULT_DIR="\${arg#--vault-dir=}" ;;`,
+      `      --ssh-key=*)        DEVBOX_SSH_PUBKEY="\${arg#--ssh-key=}" ;;`,
+      `      --port=*)           DEVBOX_SSH_PORT="\${arg#--port=}" ;;`,
+      `      --list)`,
+      `        echo "Available steps:"`,
+      `        declare -F | awk '/^declare -f step_/{print "  " $3}' | sort`,
+      `        exit 0 ;;`,
+      `      -h|--help)`,
+      `        cat <<'USAGE'`,
+      `setup.sh — guided devbox setup (generated by guide.html)`,
+      ``,
+      `USAGE:`,
+      `  ./setup.sh [options] [step_name]`,
+      ``,
+      `OPTIONS:`,
+      `  --run               Execute changes (default: dry-run)`,
+      `  --code-dir=PATH     Override host code directory`,
+      `  --vault-dir=PATH    Override host vault directory`,
+      `  --ssh-key=PATH      Override SSH public key path`,
+      `  --port=PORT         Override SSH host port`,
+      `  --list              List available step functions`,
+      `  -h, --help          Show this help`,
+      ``,
+      `EXAMPLES:`,
+      `  ./setup.sh                    # dry-run all steps`,
+      `  ./setup.sh --run              # execute all steps`,
+      `  ./setup.sh step_build --run   # execute only the build step`,
+      `  ./setup.sh step_ssh           # dry-run just the SSH step`,
+      `USAGE`,
+      `        exit 0 ;;`,
+      `      step_*)             positional+=("$arg") ;;`,
+      `      *)                  warn "Unknown argument: $arg"; exit 1 ;;`,
+      `    esac`,
+      `  done`,
+      ``,
+      `  if $DRY_RUN; then say "DRY RUN — pass --run to execute changes"; fi`,
+      `  echo`,
+      ``,
+      `  if [ \${#positional[@]} -gt 0 ]; then`,
+      `    for fn in "\${positional[@]}"; do`,
+      `      if declare -f "$fn" >/dev/null 2>&1; then`,
+      `        "$fn"`,
+      `      else`,
+      `        warn "Unknown step: $fn"`,
+      `        warn "Run ./setup.sh --list to see available steps."`,
+      `        exit 1`,
+      `      fi`,
+      `    done`,
+      `  else`,
+      `    all_steps`,
+      `  fi`,
+      ``,
+      `  echo`,
+      `  write_state`,
+      `}`,
+      ``,
+      `main "$@"`,
+    ].join('\n') + '\n';
+  }
+
+  function escapeShellDQ(s) {
+    return String(s).replace(/\\/g, '\\\\').replace(/"/g, '\\"').replace(/\$/g, '\\$').replace(/`/g, '\\`');
+  }
+
+  // ---------- output tabs ----------
+  document.querySelectorAll('.output-tabs button').forEach(b => {
+    b.addEventListener('click', () => {
+      const name = b.dataset.out;
+      document.querySelectorAll('.output-tabs button').forEach(x =>
+        x.setAttribute('aria-selected', x.dataset.out === name ? 'true' : 'false'));
+      document.querySelectorAll('.output-pane').forEach(p =>
+        p.classList.toggle('active', p.dataset.out === name));
+    });
+  });
+
+  // ---------- copy + download for outputs ----------
+  document.querySelectorAll('button.copy-out').forEach(b => {
+    b.addEventListener('click', async () => {
+      const code = document.getElementById(b.dataset.target);
+      const txt = code ? code.textContent : '';
+      try {
+        await navigator.clipboard.writeText(txt);
+        const orig = b.textContent;
+        b.textContent = 'Copied!';
+        setTimeout(() => b.textContent = orig, 1200);
+      } catch {}
+    });
+  });
+  document.querySelectorAll('button.download-out').forEach(b => {
+    b.addEventListener('click', () => {
+      const code = document.getElementById(b.dataset.target);
+      const txt = code ? code.textContent : '';
+      const blob = new Blob([txt], { type: 'text/plain;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = b.dataset.filename || 'download.txt';
+      document.body.appendChild(a); a.click(); a.remove();
+      URL.revokeObjectURL(url);
+    });
+  });
+
+  // ---------- form change → regenerate ----------
+  loadFormState();
+  form.addEventListener('input', gen);
+  form.addEventListener('change', gen);
+  gen();
+
+  // ---------- keyboard shortcuts ----------
+  document.addEventListener('keydown', (e) => {
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' ||
+        e.target.tagName === 'SELECT') return;
+    if (e.key === '/') {
+      e.preventDefault();
+      activateTab('research');
+      searchBox.focus();
+    } else if (e.key === '1') { activateTab('research'); }
+      else if (e.key === '2') { activateTab('install'); }
+      else if (e.key === '3') { activateTab('configure'); }
+  });
+
+  // ---------- sync from script state file ----------
+  document.getElementById('syncFromScriptBtn').addEventListener('click', () => {
+    document.getElementById('stateFileInput').click();
+  });
+  document.getElementById('stateFileInput').addEventListener('change', async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const status = document.getElementById('syncStatus');
+    try {
+      const text = await file.text();
+      const data = JSON.parse(text);
+      const steps = data.steps || {};
+      let synced = 0;
+      Object.entries(steps).forEach(([id, done]) => {
+        store.set('step:' + id, !!done);
+        synced++;
+      });
+      const detected = data.detected || {};
+      const formSaved = store.get('form', {});
+      if (detected.codeDir)   formSaved.codeDir = detected.codeDir;
+      if (detected.vaultDir)  formSaved.vaultDir = detected.vaultDir;
+      if (detected.sshPubkey) formSaved.sshPubkey = detected.sshPubkey;
+      if (detected.sshPort)   formSaved.sshPort = detected.sshPort;
+      store.set('form', formSaved);
+      loadFormState();
+      gen();
+      status.style.color = 'var(--pico-ins-color, #4ade80)';
+      status.textContent = `Synced ${synced} steps from ${data.generated || 'script'}.`;
+    } catch (err) {
+      status.style.color = 'var(--pico-del-color, #f87171)';
+      status.textContent = 'Parse error: ' + err.message;
+    }
+    e.target.value = '';
+  });
+
+  // ---------- reset ----------
+  document.getElementById('resetBtn').addEventListener('click', () => {
+    if (!confirm('Reset all checklist progress, form fields, and theme?')) return;
+    store.clear();
+    location.reload();
+  });
+
+})();
+</script>
+</body>
+</html>

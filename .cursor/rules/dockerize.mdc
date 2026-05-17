@@ -1,0 +1,43 @@
+---
+description: Working rules for the dockerize repo — Docker/Devbox scaffolding.
+globs:
+  - "**/*"
+alwaysApply: true
+---
+
+# dockerize — Cursor rules
+
+This repo defines `devbox-base`: a portable Linux dev container (< 2 GB) plus the host-side workflow for using it as a long-lived dev box, an AI-agent sandbox, or a per-project dev container. See `CLAUDE.md` for the full layout — the rules below are the working guardrails.
+
+## Things you must not break
+
+- **Image size budget.** `devbox-base:latest` must stay under 2 GB. Heavy tools belong in `Dockerfile.swift` or in a per-project overlay, not in `base/Dockerfile`.
+- **`guide.html` outputs must be valid for direct paste.** No `//` comments in JSON outputs (`.mcp.json`, `devcontainer.json`). Use the dedicated hint `<p>` element for instructions.
+- **`base/.env` is gitignored** — never commit it. The template is `base/.env.example`.
+- **Don't bake API keys** into image layers; pass through via compose env or `op run`.
+- **`raw/` does not exist in this repo** (that's the wiki convention) — ignore that rule here.
+
+## Single source of truth
+
+`docs/guide.html` is the canonical generator for user-facing artifacts (`.env`, `docker-compose.yml`, `devcontainer.json`, MCP config, `setup.sh`). When you edit anything under `base/` or `scripts/`, **also update the matching `render*` function in `guide.html`** so the generated output stays accurate.
+
+## Verifying a change
+
+| Touched | Run |
+|---|---|
+| `base/Dockerfile` | `cd base && DOCKER_BUILDKIT=1 docker compose build` and check `docker image inspect devbox-base:latest --format '{{.Size}}'` < 2 GB |
+| `base/docker-compose.yml` | `docker compose config` then `devbox start && devbox ssh` |
+| `base/entrypoint.sh` | `docker compose up -d --force-recreate && docker logs devbox` |
+| `scripts/*` | `shellcheck` and run the affected subcommand |
+| `docs/guide.html` | open in a browser, walk all three tabs, copy each output and validate (JSON parses, YAML parses) |
+
+## Style
+
+- Bash: `set -euo pipefail`; quote every variable; `command -v`, not `which`.
+- Dockerfile: pin versions for installs that change behavior (Swift, Node, Go via mise — see existing `ARG` defaults).
+- Compose: prefer `${VAR:-default}` over hardcoded values when something is host-specific.
+- HTML/JS: keep `guide.html` single-file. No external build step, no bundlers, no npm. Vanilla JS + Pico.css from jsdelivr.
+
+## When in doubt
+
+Read `docs/usage.md` ("Common problems") before guessing; it's already been hit and documented.

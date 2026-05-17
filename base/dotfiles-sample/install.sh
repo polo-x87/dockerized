@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+# Symlink the sample dotfiles into $HOME. Idempotent.
+set -euo pipefail
+
+HERE="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+
+link() {
+    local src="$1" dst="$2"
+    mkdir -p "$(dirname "$dst")"
+    if [ -L "$dst" ] || [ ! -e "$dst" ]; then
+        ln -sfn "$src" "$dst"
+    else
+        echo "install.sh: $dst exists and is not a symlink — skipping (back it up and re-run)"
+    fi
+}
+
+link "$HERE/.zshrc"                       "$HOME/.zshrc"
+link "$HERE/.tmux.conf"                   "$HOME/.tmux.conf"
+link "$HERE/.gitconfig"                   "$HOME/.gitconfig"
+link "$HERE/.config/mise/config.toml"     "$HOME/.config/mise/config.toml"
+
+# Boot tmux plugin manager once so resurrect/continuum register
+if [ -x "$HOME/.tmux/plugins/tpm/bin/install_plugins" ]; then
+    "$HOME/.tmux/plugins/tpm/bin/install_plugins" >/dev/null 2>&1 || true
+fi
+
+echo "install.sh: dotfiles linked into \$HOME"
