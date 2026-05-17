@@ -40,8 +40,9 @@ mcp_workflow.md       separate Python research-system Dockerfile pattern (consum
 |---|---|
 | `base/Dockerfile` | `cd base && DOCKER_BUILDKIT=1 docker compose build` — must succeed and image must stay under 2 GB (`docker image inspect devbox-base:latest --format '{{.Size}}'`) |
 | `base/docker-compose.yml` | `docker compose config` validates YAML; then `devbox start && devbox ssh` |
-| `base/entrypoint.sh` | rebuild + `docker compose up -d --force-recreate`; check `docker logs devbox` |
+| `base/entrypoint.sh` | rebuild + `docker compose up -d --force-recreate`; check `docker logs devbox`. **Also test sandbox path:** `scripts/devbox-sandbox -- node --version` — entrypoint runs distinct code paths for SSH (sshd-foreground) vs sandbox (`sudo -u dev`), so both need verification |
 | `scripts/*` | `shellcheck scripts/*` and run the affected command end-to-end |
+| `.hadolint.yaml` | `hadolint base/Dockerfile; echo $?` from repo root — must exit 0. Note: the YAML key is `ignored:` (with d), not `ignore:` — typo silently disables the suppress list |
 | `scripts/devbox audit` (any audit step) | `devbox audit` end-to-end with the relevant tool installed; verify failure modes too |
 | `docs/guide.html` | open in a browser; visit each tab; ensure every output is **valid for direct copy-paste** |
 | `docs/cli-mesh.html` | open in a browser; click each node; confirm install snippets + absolute paths still match `base/Dockerfile` and `base/dotfiles-sample/.zshrc` |
