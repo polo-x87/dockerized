@@ -10,6 +10,7 @@
 #   4. Copies base/.env.example → base/.env if .env doesn't exist.
 #   5. Ensures ~/code exists.
 #   6. Adds the dockerize/scripts dir to PATH (via ~/.zshrc, if missing).
+#   7. Installs the docs-sync git pre-commit hook (CLAUDE.md Hard rule #8).
 set -euo pipefail
 
 HERE="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
@@ -87,6 +88,12 @@ if [ -f "$ZSHRC" ] && ! grep -q "$SCRIPTS_DIR" "$ZSHRC"; then
     echo "" >> "$ZSHRC"
     echo "# devbox" >> "$ZSHRC"
     echo "export PATH=\"$SCRIPTS_DIR:\$PATH\"" >> "$ZSHRC"
+fi
+
+# 7. Git hooks (docs-sync — CLAUDE.md Hard rule #8)
+if [ -d "$REPO_ROOT/.git" ]; then
+    say "installing git hooks (docs-sync)"
+    "$SCRIPTS_DIR/install-git-hooks.sh"
 fi
 
 say "done"

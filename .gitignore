@@ -1,5 +1,6 @@
 base/.env
 .devbox-setup-state.json
+.devbox.env
 setup.sh
 *.log
 .DS_Store

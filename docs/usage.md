@@ -1,5 +1,9 @@
 # devbox — daily usage
 
+> **Docs-sync rule** (CLAUDE.md Hard rule #8): any change to `base/`, `scripts/`, `overlays/`, or root configs must update the docs in the same change — `CLAUDE.md`, `README.md`, this file, `docs/guide.html`, and `docs/cli-mesh.html` as applicable. All agents read the docs as ground truth; stale docs cause divergent behavior.
+>
+> Enforced by `scripts/check-docs-sync.sh` via a pre-commit hook (installed by `scripts/install-host.sh` or `scripts/install-git-hooks.sh`). Bypass: `SKIP_DOCS_CHECK=1 git commit …` or `git commit --no-verify`.
+
 ## Three modes of running
 
 ### Mode 1: Long-lived dev box (default)
@@ -125,3 +129,31 @@ First-run they want auth. Run each one once interactively (`devbox ssh`, then `c
 
 **Image is bigger than 2GB**
 Run `docker history devbox-base:latest` to see which layer is heavy. Common culprits: too many cargo binaries baked in (move some to a per-project overlay), keeping `apt-get update` cache (already handled), npm cache not pruned (handled by the cache mount).
+
+**`setup.sh` re-prompts for the same value every run**
+The script saves your answers to `<repo-root>/.devbox.env` after the first interactive run. If that file is missing or read-only, every run starts from the embedded defaults again. Check `ls -l .devbox.env` and re-run once to regenerate.
+
+**`setup.sh` shows the validation menu for a path you know exists**
+Validators expand `~` to `$HOME` before checking. If you set `DEVBOX_VAULT_DIR=~vault` (missing slash) or pasted a Windows-style path, the expansion still won't match. The menu's `m` option lets you type the value directly; the `a` option (only on path-like vars) accepts the invalid value anyway — useful when a later step will create the directory.
+
+## `setup.sh` — config flow
+
+`setup.sh` (downloaded from the **guide.html** Configure tab) handles one-time devbox bootstrap. Beyond running the install steps, it manages a small config layer with this precedence:
+
+```
+CLI flags     >   .devbox.env     >   ENV vars     >   embedded defaults
+(--code-dir=…)    (saved answers)     (DEVBOX_* in     (the values you
+                                       your shell)      filled in guide.html)
+```
+
+**Embedded defaults** sit at the top of the script as `: "${VAR:=default}"` — they only apply when nothing higher has set the variable. ENV vars therefore win over the defaults.
+
+**`.devbox.env`** is auto-written at `$REPO_ROOT/.devbox.env` at the end of the first interactive run. It stores each `DEVBOX_*` answer using `printf %q` for safe round-tripping (handles spaces, tildes, quotes). Sourcing it on the next run replays your choices without re-prompting. Safe to edit by hand.
+
+**Validation + fallback menu.** Each variable has a validator. When a value fails validation, the script auto-detects candidates (e.g. `~/code`, `~/src` for `DEVBOX_CODE_DIR`; all `~/.ssh/*.pub` for `DEVBOX_SSH_PUBKEY`) and shows a numbered menu. The choices: pick a number, `m` to type your own value, `h` to print copy-paste shell commands you can run in another terminal then paste the result back, or `a` (only for path-like vars — soft validation) to accept the invalid value anyway and let a later step create it.
+
+Hard-validated vars (`DEVBOX_DOTFILES_REPO`, `DEVBOX_DEV_USER`) refuse to proceed with an invalid value. Soft-validated vars (`DEVBOX_CODE_DIR`, `DEVBOX_VAULT_DIR`, `DEVBOX_SSH_PUBKEY`) warn and let you continue — useful when `install-host.sh` will create the SSH key the script is checking for.
+
+**Non-interactive mode** (no TTY, e.g. piped or CI): soft validators warn and accept; hard validators exit 1 immediately.
+
+Regenerating `setup.sh` from `guide.html` is safe: `.devbox.env` lives separately and is re-sourced by the new copy.

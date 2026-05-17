@@ -1,16 +1,11 @@
 # devbox starter .zshrc — fork this into your own dotfiles repo and iterate.
 
 export ZSH="$HOME/.oh-my-zsh"
-ZSH_THEME="robbyrussell"
+ZSH_THEME=""    # starship takes over below — keep OMZ for plugin loading only
 plugins=(
-  git
-  docker
-  rust
-  npm
   zsh-autosuggestions
   zsh-syntax-highlighting
   fzf-tab
-  direnv
 )
 source "$ZSH/oh-my-zsh.sh"
 
@@ -23,11 +18,20 @@ command -v mise >/dev/null && eval "$(mise activate zsh)"
 # direnv hook
 command -v direnv >/dev/null && eval "$(direnv hook zsh)"
 
-# fzf keybindings (Ctrl-R, Ctrl-T, Alt-C)
+# fzf keybindings (Ctrl-T, Alt-C — Ctrl-R is hijacked by atuin below)
 [ -f /usr/share/doc/fzf/examples/key-bindings.zsh ] && \
   source /usr/share/doc/fzf/examples/key-bindings.zsh
 [ -f /usr/share/doc/fzf/examples/completion.zsh ] && \
   source /usr/share/doc/fzf/examples/completion.zsh
+
+# starship — fast, lazy, cross-shell prompt (replaces ZSH_THEME)
+command -v starship >/dev/null && eval "$(starship init zsh)"
+
+# zoxide — rebind `cd` to frecency engine; falls through to builtin `cd` on miss
+command -v zoxide >/dev/null && eval "$(zoxide init zsh --cmd cd)"
+
+# atuin — sqlite-backed history search. Takes Ctrl-R; ↑ kept as last-command.
+command -v atuin >/dev/null && eval "$(atuin init zsh --disable-up-arrow)"
 
 # Aliases — modern CLI replacements
 alias ls='eza --group-directories-first'
@@ -45,6 +49,20 @@ alias g='git'
 alias gs='git status -sb'
 alias gd='git diff'
 alias gl='git log --oneline --graph --decorate -n 20'
+
+# Docker — short aliases. Pair with `lazydocker` (TUI), `ctop` (live top), `dive` (layer audit).
+alias d='docker'
+alias dc='docker compose'
+alias dps='docker ps --format "table {{.Names}}\t{{.Image}}\t{{.Status}}\t{{.Ports}}"'
+alias dpsa='docker ps -a --format "table {{.Names}}\t{{.Image}}\t{{.Status}}"'
+alias di='docker images'
+alias dlog='docker logs -f --tail=200'
+alias dex='docker exec -it'
+alias dprune='docker system prune -af --volumes'
+alias ld='lazydocker'
+alias dt='ctop'
+alias ddive='dive'
+alias dlint='hadolint'
 
 # Tmux helpers
 alias t='tmux'
