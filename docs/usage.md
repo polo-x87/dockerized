@@ -2,7 +2,7 @@
 
 > **Docs-sync rule** (CLAUDE.md Hard rule #8): any change to `base/`, `scripts/`, `overlays/`, or root configs must update the docs in the same change — `CLAUDE.md`, `README.md`, this file, `docs/guide.html`, and `docs/cli-mesh.html` as applicable. All agents read the docs as ground truth; stale docs cause divergent behavior.
 >
-> Enforced by `scripts/check-docs-sync.sh` via a pre-commit hook (installed by `scripts/install-host.sh` or `scripts/install-git-hooks.sh`). Bypass: `SKIP_DOCS_CHECK=1 git commit …` or `git commit --no-verify`.
+> Enforced by `scripts/check-docs-sync.sh` via a pre-commit hook (installed by `scripts/install-host.sh` or `scripts/install-git-hooks.sh`). The same hook also runs `hadolint base/Dockerfile` when that file is staged, and `shellcheck` on any staged `scripts/*.sh` files. Both linters warn and skip gracefully if not on PATH (`brew install hadolint shellcheck`). Bypass the entire hook: `SKIP_DOCS_CHECK=1 git commit …` or `git commit --no-verify`.
 
 ## Three modes of running
 
@@ -112,6 +112,16 @@ ld                   # short alias for lazydocker
 ```
 
 Config seed lives at `~/.config/jesseduffield/lazydocker/config.yml` (linked from `~/.dotfiles-sample/.config/jesseduffield/lazydocker/config.yml` by `install.sh`).
+
+## Host-side tool version parity (mise)
+
+`base/dotfiles-sample/.config/mise/config.toml` pins the same CLI tool versions
+(zoxide, atuin, dive, ctop, and friends) that are baked into `base/Dockerfile`.
+It is for **host-side management only** — inside the container the tools are
+installed system-wide by the image build and are not managed by mise. To match
+the container's versions on your Mac, install [mise](https://mise.jdx.dev/) and
+run `mise install` from any directory where the config is active (or copy the
+`[tools]` block into your `~/.config/mise/config.toml`).
 
 ## Updating
 

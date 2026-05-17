@@ -4,6 +4,8 @@
 # Idempotent. Run from anywhere; uses the dockerize repo this script lives in.
 # Installs:
 #   pre-commit  → scripts/check-docs-sync.sh   (CLAUDE.md Hard rule #8)
+#               → hadolint base/Dockerfile      (when base/Dockerfile is staged)
+#               → shellcheck scripts/*.sh       (when any scripts/*.sh is staged)
 #
 # To uninstall:  rm .git/hooks/pre-commit
 set -euo pipefail
@@ -44,9 +46,38 @@ cat > "$HOOK" <<'EOF'
 #!/usr/bin/env bash
 # dockerize: docs-sync (installed by scripts/install-git-hooks.sh)
 # Enforces CLAUDE.md Hard rule #8 — code/config changes must include docs.
+# Also runs hadolint on base/Dockerfile and shellcheck on staged scripts/*.sh.
 set -e
 ROOT="$(git rev-parse --show-toplevel)"
-exec "$ROOT/scripts/check-docs-sync.sh"
+
+# 1. Docs-sync check (always runs).
+"$ROOT/scripts/check-docs-sync.sh" || exit $?
+
+# 2. hadolint — runs only when base/Dockerfile is staged.
+if git diff --cached --name-only | grep -q '^base/Dockerfile$'; then
+    if command -v hadolint >/dev/null 2>&1; then
+        echo "==> hadolint base/Dockerfile"
+        hadolint "$ROOT/base/Dockerfile" || exit $?
+    else
+        printf '\033[1;33m!! hadolint not found on PATH — skipping Dockerfile lint (brew install hadolint to enable)\033[0m\n' >&2
+    fi
+fi
+
+# 3. shellcheck — runs on every staged scripts/*.sh file.
+STAGED_SH="$(git diff --cached --name-only | grep '^scripts/.*\.sh$' || true)"
+if [ -n "$STAGED_SH" ]; then
+    if command -v shellcheck >/dev/null 2>&1; then
+        echo "==> shellcheck on staged scripts/*.sh"
+        # Build absolute paths and pass them all at once.
+        SC_FILES=()
+        while IFS= read -r f; do
+            SC_FILES+=("$ROOT/$f")
+        done <<< "$STAGED_SH"
+        shellcheck "${SC_FILES[@]}" || exit $?
+    else
+        printf '\033[1;33m!! shellcheck not found on PATH — skipping shell lint (brew install shellcheck to enable)\033[0m\n' >&2
+    fi
+fi
 EOF
 chmod +x "$HOOK"
 say "done. test it:"

@@ -4,3 +4,15 @@ base/.env
 setup.sh
 *.log
 .DS_Store
+
+# Local Claude Code overrides (settings, hookify rules)
+.claude/
+
+# Generated artifacts from docs/guide.html (copy-paste outputs, not source)
+Dockerfile.txt
+devcontainer.json
+docker-compose.research.yml
+docker-compose.yml
+env.txt
+mcp.json
+scripts/setup_.sh
