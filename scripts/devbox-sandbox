@@ -51,7 +51,11 @@ if [ $# -eq 0 ]; then
     set -- /usr/local/bin/entrypoint.sh shell
 fi
 
-exec docker run --rm -it \
+# Attach a TTY only when stdin is a real terminal (not a pipe or CI)
+TTY_FLAG=""
+[ -t 0 ] && TTY_FLAG="-t"
+
+exec docker run --rm -i $TTY_FLAG \
     --name "$NAME" \
     --hostname "$NAME" \
     --network "$NETWORK" \

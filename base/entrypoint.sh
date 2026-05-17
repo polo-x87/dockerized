@@ -89,6 +89,8 @@ case "${1:-sshd-foreground}" in
         exec sudo -u "$USERNAME" -H /usr/bin/zsh -l
         ;;
     *)
-        exec sudo -u "$USERNAME" -H "$@"
+        # Wrap in `env PATH=...` so the command is looked up via the image PATH
+        # (mise shims, .local/bin) — sudo's secure_path would otherwise hide them.
+        exec sudo -u "$USERNAME" -H env PATH="$PATH" "$@"
         ;;
 esac

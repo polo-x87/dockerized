@@ -301,7 +301,9 @@ COPY --chown=${USERNAME}:${USERNAME} dotfiles-sample/ /home/${USERNAME}/.dotfile
 
 USER root
 COPY entrypoint.sh /usr/local/bin/entrypoint.sh
-RUN chmod +x /usr/local/bin/entrypoint.sh
+RUN chmod +x /usr/local/bin/entrypoint.sh && \
+    printf 'PATH=/home/%s/.local/bin:/home/%s/.cargo/bin:/home/%s/.local/share/mise/shims:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin\n' \
+        "${USERNAME}" "${USERNAME}" "${USERNAME}" >> /etc/environment
 
 # SSH listens on 22 inside the container; compose maps it to 2222 on the host
 EXPOSE 22

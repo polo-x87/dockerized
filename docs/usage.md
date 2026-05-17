@@ -166,6 +166,17 @@ First time only: run `tmux` once, hit `Ctrl-a + I` (capital i) to install plugin
 **Claude/Codex/Gemini complains about missing config**
 First-run they want auth. Run each one once interactively (`devbox ssh`, then `claude` etc.) to log in; the config lands in `~/.config/...` which is on the `devbox-config` named volume and persists.
 
+**`mise: command not found` or `node: command not found` in non-interactive SSH sessions**
+When you run `devbox ssh -- <cmd>` (a non-interactive SSH command), PAM's `pam_env.so` module (configured in `/etc/pam.d/sshd`) runs at login and overwrites the `PATH` set by Docker's `ENV` instruction. This strips `.local/bin` and the mise shims directory, so tools like `mise`, `node`, and `go` are not found even though they are correctly installed in the image.
+
+The fix: the Dockerfile's final stage writes the correct `PATH` to `/etc/environment`, which PAM reads and merges — making the full path available in all SSH session types, including non-interactive ones. This is already applied in the current image. If you see this on an older image, rebuild with `devbox update` or `docker compose build`.
+
+**`mise: command not found` in `devbox-sandbox -- <cmd>`**
+A different code path from SSH. Sandbox runs the command through `entrypoint.sh`, which `sudo`s to the dev user. Sudo's `secure_path` overrides PATH for command lookup, hiding mise shims even when `/etc/environment` is correct. The entrypoint wraps the command in `env PATH="$PATH" <cmd>` so PATH lookup uses the image PATH, not sudo's secure_path. Already applied — rebuild if you see this on an old image.
+
+**`devbox-sandbox` fails with "the input device is not a TTY"**
+Old versions of the script passed `-it` to `docker run` unconditionally, which requires a real terminal. Non-interactive callers (CI, scripts, agents) have no TTY. The script now uses `-i` always and adds `-t` only when stdin is a TTY (`[ -t 0 ]`). Pull/update if you hit this.
+
 **Image is bigger than 2GB**
 Run `docker history devbox-base:latest` to see which layer is heavy. Common culprits: too many cargo binaries baked in (move some to a per-project overlay), keeping `apt-get update` cache (already handled), npm cache not pruned (handled by the cache mount).
 

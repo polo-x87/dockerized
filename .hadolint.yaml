@@ -1,0 +1,6 @@
+ignored:
+  - DL3008  # apt-get version pinning — versions managed via ARG in Dockerfile
+  - DL3016  # npm version pinning — AI agents installed unpinned intentionally
+  - DL4006  # set -o pipefail — pre-existing style, low risk in this image
+  - DL3002  # last USER is root — intentional: entrypoint must start sshd as root
+  - SC2086  # unquoted variables — pre-existing, reviewed as safe in context
