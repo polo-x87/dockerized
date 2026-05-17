@@ -17,11 +17,14 @@ if [ ! -f /etc/ssh/ssh_host_ed25519_key ]; then
     ssh-keygen -A
 fi
 
-# Pull in the host's public key from the mounted authorized_keys (if any).
-# Compose mounts ~/.ssh/devbox_ed25519.pub → ${HOME_DIR}/.ssh/authorized_keys:ro,
-# so this is just a permissions sanity check.
-if [ -f "${HOME_DIR}/.ssh/authorized_keys" ]; then
-    chmod 600 "${HOME_DIR}/.ssh/authorized_keys" || true
+# Pull in the host's public key from the staging mount.
+# Compose mounts the pubkey :ro at /run/devbox/pubkey; we copy it so sshd
+# sees the correct owner (dev) and mode (600) — StrictModes requires both.
+if [ -f /run/devbox/pubkey ]; then
+    mkdir -p "${HOME_DIR}/.ssh"
+    cp /run/devbox/pubkey "${HOME_DIR}/.ssh/authorized_keys"
+    chown "${USERNAME}:${USERNAME}" "${HOME_DIR}/.ssh/authorized_keys"
+    chmod 600 "${HOME_DIR}/.ssh/authorized_keys"
 fi
 
 # ---------------------------------------------------------------------------

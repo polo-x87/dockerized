@@ -136,6 +136,8 @@ The image will rebuild, volumes are fresh, `entrypoint.sh` re-clones `DOTFILES_R
 **"permission denied (publickey)" when running `devbox ssh`**
 The public key in `base/.env` (`DEVBOX_HOST_SSH_PUBKEY`) needs to match the private key in `~/.ssh/config`. Defaults: `~/.ssh/devbox_ed25519.pub` ↔ `~/.ssh/devbox_ed25519`. `scripts/install-host.sh` sets both consistently.
 
+If the key and config look right, check for a stale host-key entry: `rm -f ~/.ssh/known_hosts_devbox` then retry. This happens after a container recreate changes the sshd host key.
+
 **"port 2222 already in use"**
 Edit `base/docker-compose.yml`, change `127.0.0.1:2222:22` to another port, also update `~/.ssh/config`.
 
