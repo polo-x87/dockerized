@@ -95,12 +95,8 @@ const nodes = [
     desc:"Login shell baked at /usr/bin/zsh in Stage 2 of base/Dockerfile.",
     file:"/Users/user/vault/mcp/dockerize/base/Dockerfile" },
   { id:"omz",       cluster:"shell",   x:240, y:80,  status:"config", label:"oh-my-zsh",
-    desc:"Loaded by .zshrc. Currently uses `robbyrussell` theme + git plugin — both add ~80–150ms to every prompt. Slim to keep interactive snappy.",
+    desc:"Loaded by .zshrc with `robbyrussell` theme. Slim plugins=() to keep prompt latency down.",
     file:"/Users/user/vault/mcp/dockerize/base/dotfiles-sample/.zshrc" },
-  { id:"starship",  cluster:"shell",   x:340, y:130, status:"have",   label:"starship",
-    desc:"Replace robbyrussell. Lazy-evaluated modules (only renders git when in a repo, etc.). Drops prompt latency dramatically. Single static binary.",
-    install:"curl -sS https://starship.rs/install.sh | sh -s -- -y -b /usr/local/bin",
-    dev:"starship/starship — Matan Kushner" },
   { id:"autosug",   cluster:"shell",   x:200, y:200, status:"have",   label:"autosuggest",
     desc:"zsh-autosuggestions — already cloned into $ZSH_CUSTOM in cli-tools stage." },
   { id:"syntax",    cluster:"shell",   x:300, y:230, status:"have",   label:"syntax-hl",
@@ -182,7 +178,7 @@ const nodes = [
   { id:"omz-git",   cluster:"risk",    x:80,  y:640, status:"watch",  label:"OMZ git plugin",
     desc:"BLOAT: ~150 aliases + functions on every shell init. ~50–80ms parse cost. Remove `git` from plugins=() — your manual g/gs/gd/gl aliases already cover it." },
   { id:"theme",     cluster:"risk",    x:220, y:680, status:"watch",  label:"robbyrussell",
-    desc:"BLOAT: runs `git status` synchronously on every prompt even outside repos. Swap to starship — only triggers in repos and runs in <10ms." },
+    desc:"BLOAT: runs `git status` synchronously on every prompt even outside repos. Set ZSH_THEME=\"\" and a minimal PROMPT if latency matters." },
   { id:"agents",    cluster:"risk",    x:360, y:640, status:"watch",  label:"3 AI agents",
     desc:"BLOAT: claude + codex + gemini all installed globally via npm in Stage 4 (~250 MB combined). Reasonable for a multi-agent box, but you can drop to one per overlay if image creeps over 2 GB." },
   { id:"size",      cluster:"risk",    x:500, y:680, status:"watch",  label:"2 GB ceiling",
@@ -190,7 +186,7 @@ const nodes = [
   { id:"sock",      cluster:"risk",    x:640, y:640, status:"watch",  label:"docker.sock GID",
     desc:"ERROR class: container can exec docker but gets EACCES. entrypoint.sh re-aligns the `docker` group GID. If you bypass the entrypoint (e.g., `docker run … bash`), you'll see this." },
   { id:"keys",      cluster:"risk",    x:780, y:680, status:"watch",  label:"API keys in image",
-    desc:"ERROR class: CLAUDE.md hard rule #4. Never bake keys into the image. Use `op run --env-file=…` (alias bundle exists, commented in .zshrc — uncomment after `op signin`)." },
+    desc:"ERROR class: CLAUDE.md hard rule #4. Never bake keys into the image. Use `op run --env-file=~/.config/op/<agent>.env` — templates in dotfiles-sample/.config/op/*.env.example; zsh wrappers in .zshrc. DeepSeek: npx run-deepseek-cli + DEEPSEEK_API_KEY passthrough, not baked in image." },
   { id:"docsync",   cluster:"config",  x:600, y:520, status:"config", label:"docs-sync hook",
     desc:"Pre-commit hook enforcing CLAUDE.md Hard rule #8: blocks commits that touch base/scripts/overlays/root configs without staging docs. Installed automatically by scripts/install-host.sh.",
     file:"/Users/user/vault/mcp/dockerize/scripts/check-docs-sync.sh",
@@ -201,10 +197,10 @@ const nodes = [
 // Edges
 const edges = [
   ["zsh","omz"], ["omz","autosug"], ["omz","syntax"], ["omz","fzftab"],
-  ["zsh","starship"], ["zshrc","starship"], ["zshrc","omz"],
+  ["zshrc","omz"],
   ["zshrc","zoxide"], ["zshrc","atuin"], ["zshrc","direnv"], ["zshrc","fzf"],
   ["fzf","rg"], ["fzf","bat"], ["fzf","fd"], ["fzf","fzftab"],
-  ["dockerfile","zsh"], ["dockerfile","starship"], ["dockerfile","zoxide"],
+  ["dockerfile","zsh"], ["dockerfile","zoxide"],
   ["dockerfile","atuin"], ["dockerfile","lazydocker"], ["dockerfile","dive"],
   ["dockerfile","ctop"], ["dockerfile","hadolint"], ["dockerfile","docker"],
   ["compose","docker"], ["compose","sock"],
@@ -307,7 +303,7 @@ document.querySelectorAll(".chip").forEach(chip => {
 });
 
 // initial detail
-showDetail(nodes.find(n=>n.id==="starship"));
+showDetail(nodes.find(n=>n.id==="zshrc"));
 </script>
 
 </body>

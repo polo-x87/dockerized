@@ -418,7 +418,7 @@
       <table class="compact">
         <thead><tr><th>Category</th><th>Tools</th></tr></thead>
         <tbody>
-          <tr><td>Shell</td><td>zsh, oh-my-zsh (slim), starship prompt, tmux (+ resurrect, continuum)</td></tr>
+          <tr><td>Shell</td><td>zsh, oh-my-zsh (robbyrussell), tmux (+ resurrect, continuum)</td></tr>
           <tr><td>Modern CLI</td><td>fzf, ripgrep, bat, eza, fd, delta, jq, yq, direnv, zoxide, atuin</td></tr>
           <tr><td>VCS</td><td>git, gh</td></tr>
           <tr><td>Languages</td><td>rust (stable), node (mise), python + uv, go (mise), Java 17 (Temurin)</td></tr>
@@ -714,6 +714,10 @@ ANTHROPIC_API_KEY=op://Personal/Anthropic/api_key</code></pre></div>
             <label>GEMINI_API_KEY
               <input type="text" name="geminiKey" placeholder="…" />
             </label>
+            <label>DEEPSEEK_API_KEY
+              <input type="text" name="deepseekKey" placeholder="…" />
+            </label>
+            <p class="muted" style="font-size:0.8rem;">DeepSeek is not baked into the image; use <code>npx -y run-deepseek-cli</code> or the <code>deepseek</code> shell helper.</p>
           </div>
           <div id="opFields" hidden>
             <label>1Password vault
@@ -1244,7 +1248,8 @@ ANTHROPIC_API_KEY=op://Personal/Anthropic/api_key</code></pre></div>
       lines.push(`# AI agent keys (plaintext — consider 1Password mode instead)`,
                  `ANTHROPIC_API_KEY=${f.anthropicKey || ''}`,
                  `OPENAI_API_KEY=${f.openaiKey || ''}`,
-                 `GEMINI_API_KEY=${f.geminiKey || ''}`);
+                 `GEMINI_API_KEY=${f.geminiKey || ''}`,
+                 `DEEPSEEK_API_KEY=${f.deepseekKey || ''}`);
     }
     return lines.join('\n') + '\n';
   }
@@ -1264,6 +1269,7 @@ ANTHROPIC_API_KEY=op://Personal/Anthropic/api_key</code></pre></div>
           `      ANTHROPIC_API_KEY: \${ANTHROPIC_API_KEY:-}`,
           `      OPENAI_API_KEY: \${OPENAI_API_KEY:-}`,
           `      GEMINI_API_KEY: \${GEMINI_API_KEY:-}`,
+          `      DEEPSEEK_API_KEY: \${DEEPSEEK_API_KEY:-}`,
         ];
     if (f.mcpAndroid) {
       envBlock.push(`      # MCP — Android: point in-container adb at the host's adb server`);
